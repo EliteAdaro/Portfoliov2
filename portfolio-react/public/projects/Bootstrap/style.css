@@ -1,0 +1,42 @@
+@media (max-width: 768px) {
+    .nav-items {
+        justify-content: flex-start;
+    }
+}
+
+.navbar {
+    background-color: transparent;
+    box-shadow: none;
+    border-bottom: none;
+}
+
+.navbar-brand {
+    font-size: 1.75rem;
+    font-weight: bold;
+    color: #b49c9c;
+    margin-left: 15px;
+}
+
+.navbar-nav .nav-link {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #e711ee;
+    margin-right: 15px;
+    padding: 10px 15px;
+    border-radius: 4px;
+}
+
+.navbar-nav .nav-link:hover {
+    text-decoration: none;
+    color: #7f0d0d;
+    background-color: #ff0059;
+
+}
+
+.navbar-collapse {
+    justify-content: flex-end;
+}
+
+div [class="col-md-6 col-lg-4 mb-4"]:hover {
+    background-color: aliceblue;
+}

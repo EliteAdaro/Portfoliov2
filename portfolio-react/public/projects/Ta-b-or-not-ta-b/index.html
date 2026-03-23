@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="nl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <title>Bootstrap</title>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+        <div class="container-fluid d-flex justify-content-between">
+            <div class="d-flex flex-nowarp justify-content-between w-100">
+                <a class="navbar-brand fw-bold" href="#">Mijn Blog</a>
+
+                <form class="d-inline-flex flex-shrink me-1" role="search">
+                    <input class="form-control me-1" type="search" placeholder="Search" aria-label="Search">
+                    <button class="btn btn-outline-success" type="submit">Search</button>
+                </form>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-links" aria-controls="navbar-links" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
+
+            <div class="collapse navbar-collapse flex-grow-0 align-items-center" id="navbar-links">
+                <ul class="navbar-nav me-3">
+                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="#">Home</a></li>
+                    <li class="nav-item"><a class="nav-link text-nowarp">About Me</a></li>
+                    <li class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle" id="navbar-dropdown" data-bs-toggle="dropdown">Account</a>
+                        <ul class="dropdown-menu" aria-labelledby="navbar-dropdown">
+                            <li><a href="#" class="dropdown-item">Settings</a></li>
+                            <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal">Log Out</a></li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <span class="position-relative w-25" data-bs-toggle="tooltip" data-bs-placement="auto" data-bs-title="Er zijn nieuwe posts">
+                    <i class="bi bi-bell text-white"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger rounded-circle"></span>
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Je gaat uitloggen</h1>
+                </div>
+                <div class="modal-body">
+                    Niet opgeslagen wijzigingen zouden verloren kunnen gaan. Weet je zeker dat je wil uitloggen?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Nee</button>
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal">Ja</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle"></i>Je bent ingelogd
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div class="alert alert-primary alert-dismissible fade show" role="alert">
+        <i class="bi bi-info-circle"></i>je bent ingelogd als admin
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="container-fluid mt-3">
+        <div class="row row-cols-1 row-cols-md-2 g-4">
+            <div class="col">
+                <div class="card">
+                    <div id="carouselExampleSlidesOnly" class="carousel slide" data-bs-ride="carousel" data-bs-interval="2000" data-bs-pause="false">
+                        <div class="carousel-inner">
+                            <div class="carousel-item active">
+                                <img src="https://picsum.photos/650/232?grayscale?random=1" class="d-block w-100 card-img-top" alt="">
+                            </div>
+                            <div class="carousel-item">
+                                <img src="https://picsum.photos/650/232?grayscale?random=2" class="d-block w-100 card-img-top" alt="">
+                            </div>
+                            <div class="carousel-item">
+                                <img src="https://picsum.photos/650/232?grayscale?random=3" class="d-block w-100 card-img-top" alt="">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Programmeren: een zee van mogelijkheden<span class="badge bg-danger">New</span></h5>
+                        <a href="#" class="btn btn-primary">Lees meer</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card">
+                    <img src="https://picsum.photos/650/232?blur=4?random=4" class="card-img-top" alt="">
+                    <div class="card-body">
+                        <h5 class="card-title">Tips voor mobile-first development</h5>
+                        <a href="#" class="btn btn-primary">Lees meer</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card">
+                    <img src="https://picsum.photos/650/232?grayscale&blur=2?random=5" class="card-img-top" alt="">
+                    <div class="card-body">
+                        <h5 class="card-title">Waarom je geen vuurwerk in je computer moet afsteken</h5>
+                        <a href="#" class="btn btn-primary">Lees meer</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card">
+                    <img src="https://picsum.photos/650/232?random=6" class="card-img-top" alt="">
+                    <div class="card-body">
+                        <h5 class="card-title">Het leven als digital nomad</h5>
+                        <a href="#" class="btn btn-primary">Lees meer</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer footer-expand-sm navbar-dark bg-dark text-white">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-4">
+                    <h2>Mijn BLog</h2>
+                    <p>&copy;Bit Academy</p>
+                </div>
+                <div class="col-6"><nav>
+                    <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                        <button class="nav-link active" id="nav-aboutme-tab" data-bs-toggle="tab" data-bs-target="#nav-aboutme" type="button" role="tab" aria-controls="nav-aboutme" aria-selected="true">About me</button>
+                        <button class="nav-link" id="nav-contact-tab" data-bs-toggle="tab" data-bs-target="#nav-contact" type="button" role="tab" aria-controls="nav-contact" aria-selected="false">Contact</button>
+                    </div>
+                </nav>
+                <div class="tab-content" id="nav-tabContent">
+                    <div class="tab-pane fade show active" id="nav-aboutme" role="tabpanel" aria-labelledby="nav-aboutme-tab" tabindex="0">Ik ben IT'er, tech enthousiast en coach bij Bit Academy. Vanuit deze achtergrond probeer ik zo veel mogelijk mensen iets nieuws te leren over tech.</div>
+                    <div class="tab-pane fade" id="nav-contact" role="tabpanel" aria-labelledby="nav-contact-tab" tabindex="0">
+                        Email:<a href="mailto:info@bit-academy.nl">info@bit-academy.nl</a><br>
+                        Adres: Koningin Wilhelminaplein 1, Amsterdam
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+</body>
+
+</html>
