@@ -23,13 +23,16 @@ export default function Contact() {
     e.preventDefault()
     setSending(true)
 
-    // Simulate sending (replace with actual form service like Formspree)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    // Opens the user's email client with pre-filled fields
+    const subject = encodeURIComponent(`Portfolio Contact from ${formData.name}`)
+    const body = encodeURIComponent(
+      `Name: ${formData.name}\nEmail: ${formData.email}\nCompany: ${formData.company || 'N/A'}\n\nMessage:\n${formData.message}`
+    )
+    window.location.href = `mailto:${personalInfo.email}?subject=${subject}&body=${body}`
 
     setSubmitted(true)
     setSending(false)
     setFormData({ name: '', email: '', company: '', message: '' })
-
     setTimeout(() => setSubmitted(false), 5000)
   }
 
@@ -44,7 +47,7 @@ export default function Contact() {
       icon: Phone,
       label: 'Phone',
       value: personalInfo.phone,
-      href: `tel:${personalInfo.phone.replace(/\s/g, '')}`,
+      href: null,
     },
     {
       icon: Mail,
@@ -176,31 +179,36 @@ export default function Contact() {
           {/* Contact Details */}
           <AnimatedReveal direction="right" delay={0.2}>
             <div className="space-y-6">
-              {contactDetails.map((detail) => (
-                <a
-                  key={detail.label}
-                  href={detail.href}
-                  target={detail.label === 'Location' ? '_blank' : undefined}
-                  rel={
-                    detail.label === 'Location'
-                      ? 'noopener noreferrer'
-                      : undefined
-                  }
-                  className="flex items-start gap-4 p-4 rounded-xl border border-slate-200 dark:border-navy-lighter hover:border-primary/50 transition-all group"
-                >
-                  <div className="p-3 rounded-lg bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
-                    <detail.icon size={20} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-mono text-slate-400 dark:text-slate-text uppercase tracking-wider">
-                      {detail.label}
-                    </p>
-                    <p className="text-slate-700 dark:text-lightest-slate font-medium mt-1">
-                      {detail.value}
-                    </p>
-                  </div>
-                </a>
-              ))}
+              {contactDetails.map((detail) => {
+                const Wrapper = detail.href ? 'a' : 'div'
+                const wrapperProps = detail.href
+                  ? {
+                      href: detail.href,
+                      target: detail.label === 'Location' ? '_blank' : undefined,
+                      rel: detail.label === 'Location' ? 'noopener noreferrer' : undefined,
+                    }
+                  : {}
+
+                return (
+                  <Wrapper
+                    key={detail.label}
+                    {...wrapperProps}
+                    className="flex items-start gap-4 p-4 rounded-xl border border-slate-200 dark:border-navy-lighter hover:border-primary/50 transition-all group"
+                  >
+                    <div className="p-3 rounded-lg bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
+                      <detail.icon size={20} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-mono text-slate-400 dark:text-slate-text uppercase tracking-wider">
+                        {detail.label}
+                      </p>
+                      <p className="text-slate-700 dark:text-lightest-slate font-medium mt-1">
+                        {detail.value}
+                      </p>
+                    </div>
+                  </Wrapper>
+                )
+              })}
 
               <div className="p-6 rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20">
                 <p className="font-mono text-primary text-sm mb-2">

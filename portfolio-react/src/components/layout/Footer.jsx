@@ -9,7 +9,7 @@ export default function Footer() {
           href={socialLinks.github}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-slate-500 dark:text-slate-text hover:text-primary transition-colors"
+          className="text-slate-500 dark:text-slate-300 hover:text-primary transition-colors"
           aria-label="GitHub"
         >
           <Github size={20} />
@@ -18,20 +18,20 @@ export default function Footer() {
           href={socialLinks.linkedin}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-slate-500 dark:text-slate-text hover:text-primary transition-colors"
+          className="text-slate-500 dark:text-slate-300 hover:text-primary transition-colors"
           aria-label="LinkedIn"
         >
           <Linkedin size={20} />
         </a>
         <a
           href={`mailto:${personalInfo.email}`}
-          className="text-slate-500 dark:text-slate-text hover:text-primary transition-colors"
+          className="text-slate-500 dark:text-slate-300 hover:text-primary transition-colors"
           aria-label="Email"
         >
           <Mail size={20} />
         </a>
       </div>
-      <p className="text-sm font-mono text-slate-400 dark:text-slate-text">
+      <p className="text-sm font-mono text-slate-500 dark:text-slate-300">
         Designed & Built by {personalInfo.name}
       </p>
     </footer>

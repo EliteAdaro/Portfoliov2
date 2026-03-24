@@ -6,7 +6,8 @@ export const personalInfo = {
     'I am a software development student based in Hengelo, Netherlands, specializing in building polished, accessible, and performant digital experiences. Currently studying ICT at ROC van Twente.',
   location: 'Hengelo, Netherlands',
   email: 'kayne.99@hotmail.com',
-  phone: '+31 6 52 88 06 06',
+  phone: '+31 6 52 ** ** **',
+  phoneRaw: '+31652880606',
 }
 
 export const navLinks = [
@@ -69,6 +70,6 @@ export const aboutText = [
 ]
 
 export const socialLinks = {
-  github: 'https://github.com/',
-  linkedin: 'https://linkedin.com/',
+  github: 'https://github.com/EliteAdaro',
+  linkedin: 'https://nl.linkedin.com/in/kayne-neyens-919318388',
 }
