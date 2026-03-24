@@ -71,3 +71,32 @@ body {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: var(--color-primary);
 }
+
+/* Easter egg: Cyberpunk mode */
+.cyberpunk {
+  --color-primary: #ff00ff !important;
+  --color-primary-dark: #cc00cc !important;
+  --color-navy: #0d0221 !important;
+  --color-navy-light: #150530 !important;
+  --color-navy-lighter: #2a0845 !important;
+  --color-lightest-slate: #ff71ce !important;
+}
+
+.cyberpunk * {
+  transition: color 0.3s, background-color 0.3s, border-color 0.3s !important;
+}
+
+.cyberpunk::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9997;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 0, 255, 0.03) 0px,
+    rgba(255, 0, 255, 0.03) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}

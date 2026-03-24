@@ -1,4 +1,7 @@
 {
+  "rewrites": [
+    { "source": "/((?!assets|fonts|projects|favicon|CVKayneNeyens|og-).*)", "destination": "/index.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",

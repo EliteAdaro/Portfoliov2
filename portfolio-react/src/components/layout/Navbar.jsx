@@ -39,7 +39,7 @@ export default function Navbar() {
           className="flex items-center gap-2 group"
           whileHover={{ scale: 1.05 }}
         >
-          <span className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-navy font-bold text-sm font-mono">
+          <span data-logo className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-navy font-bold text-sm font-mono select-none">
             KN
           </span>
           <span className="hidden sm:block font-semibold text-slate-900 dark:text-lightest-slate group-hover:text-primary transition-colors">
