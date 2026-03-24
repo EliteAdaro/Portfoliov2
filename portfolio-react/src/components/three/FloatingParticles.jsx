@@ -1,9 +1,9 @@
 import { useRef, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
-import * as THREE from 'three'
 
 export default function FloatingParticles({ count = 150 }) {
   const mesh = useRef()
+  const elapsed = useRef(0)
 
   const particles = useMemo(() => {
     const positions = new Float32Array(count * 3)
@@ -19,10 +19,11 @@ export default function FloatingParticles({ count = 150 }) {
     return { positions, speeds }
   }, [count])
 
-  useFrame((state) => {
+  useFrame((_, delta) => {
     if (!mesh.current) return
+    elapsed.current += delta
     const positions = mesh.current.geometry.attributes.position.array
-    const time = state.clock.elapsedTime
+    const time = elapsed.current
 
     for (let i = 0; i < count; i++) {
       positions[i * 3 + 1] += particles.speeds[i]
