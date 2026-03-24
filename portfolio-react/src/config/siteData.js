@@ -1,3 +1,16 @@
+function getAge(birthDate) {
+  const today = new Date()
+  const birth = new Date(birthDate)
+  let age = today.getFullYear() - birth.getFullYear()
+  const monthDiff = today.getMonth() - birth.getMonth()
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--
+  }
+  return age
+}
+
+export const age = getAge('1999-09-05')
+
 export const personalInfo = {
   name: 'Kayne Neyens',
   title: 'Software Developer',
@@ -63,7 +76,7 @@ export const projects = [
 ]
 
 export const aboutText = [
-  "Hello! I'm Kayne, a passionate and energetic 25-year-old from Hengelo. In my daily life, I combine my part-time job at DHL with my studies at ROC van Twente, where I'm pursuing an ICT education. My interest in technology and problem-solving comes in handy in both my work and studies.",
+  `Hello! I'm Kayne, a passionate and energetic ${age}-year-old from Hengelo. In my daily life, I combine my part-time job at DHL with my studies at ROC van Twente, where I'm pursuing an ICT education. My interest in technology and problem-solving comes in handy in both my work and studies.`,
   "Outside of work and school, I love staying active. Walking in nature helps me clear my head, while I also enjoy spending time with friends — whether that's gaming at home or going out together. Gaming is one of my favorite ways to relax and explore new worlds.",
   "I also played field hockey for many years, a sport I practiced with great enthusiasm. Every Sunday I was on the field with my team, and after the match we enjoyed a social get-together to unwind and catch up.",
   "In short, I'm someone who likes to stay busy, both physically and mentally, and I find it important to maintain a good balance between work, studies, and relaxation.",
