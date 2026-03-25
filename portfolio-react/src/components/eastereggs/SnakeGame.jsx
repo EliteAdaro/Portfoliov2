@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import Leaderboard from './Leaderboard'
+import ScoreSubmit from './ScoreSubmit'
 
 const GRID = 20
 const CELL = 20
@@ -9,6 +11,8 @@ export default function SnakeGame() {
   const [score, setScore] = useState(0)
   const [gameOver, setGameOver] = useState(false)
   const [started, setStarted] = useState(false)
+  const [showSubmit, setShowSubmit] = useState(false)
+  const [leaderboardKey, setLeaderboardKey] = useState(0)
   const dirRef = useRef({ x: 1, y: 0 })
   const gameRef = useRef(null)
 
@@ -31,8 +35,23 @@ export default function SnakeGame() {
     gameRef.current = initGame()
     setScore(0)
     setGameOver(false)
+    setShowSubmit(false)
     setStarted(true)
   }, [initGame])
+
+  const handleGameOver = useCallback(() => {
+    setGameOver(true)
+    setShowSubmit(true)
+  }, [])
+
+  const handleScoreSubmitted = useCallback(() => {
+    setShowSubmit(false)
+    setLeaderboardKey((k) => k + 1) // refresh leaderboard
+  }, [])
+
+  const handleSkipSubmit = useCallback(() => {
+    setShowSubmit(false)
+  }, [])
 
   useEffect(() => {
     gameRef.current = initGame()
@@ -83,13 +102,13 @@ export default function SnakeGame() {
 
       // Wall collision
       if (head.x < 0 || head.x >= GRID || head.y < 0 || head.y >= GRID) {
-        setGameOver(true)
+        handleGameOver()
         return
       }
 
       // Self collision
       if (game.snake.some((s) => s.x === head.x && s.y === head.y)) {
-        setGameOver(true)
+        handleGameOver()
         return
       }
 
@@ -161,48 +180,64 @@ export default function SnakeGame() {
     }, SPEED)
 
     return () => clearInterval(interval)
-  }, [started, gameOver])
+  }, [started, gameOver, handleGameOver])
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <div className="flex items-center justify-between w-full max-w-[400px]">
-        <span className="font-mono text-primary text-sm">Score: {score}</span>
-        {gameOver && (
-          <button
-            onClick={restart}
-            className="px-4 py-1 border border-primary text-primary font-mono text-sm rounded hover:bg-primary/10 transition-colors"
-          >
-            Play Again
-          </button>
-        )}
-      </div>
+    <div className="flex flex-col lg:flex-row items-start justify-center gap-4">
+      {/* Game area */}
+      <div className="flex flex-col items-center gap-4">
+        <div className="flex items-center justify-between w-full max-w-[400px]">
+          <span className="font-mono text-primary text-sm">Score: {score}</span>
+          {gameOver && !showSubmit && (
+            <button
+              onClick={restart}
+              className="px-4 py-1 border border-primary text-primary font-mono text-sm rounded hover:bg-primary/10 transition-colors"
+            >
+              Play Again
+            </button>
+          )}
+        </div>
 
-      <div className="relative">
-        <canvas
-          ref={canvasRef}
-          width={GRID * CELL}
-          height={GRID * CELL}
-          className="rounded-lg border border-navy-lighter"
-        />
+        <div className="relative">
+          <canvas
+            ref={canvasRef}
+            width={GRID * CELL}
+            height={GRID * CELL}
+            className="rounded-lg border border-navy-lighter"
+          />
 
-        {!started && !gameOver && (
-          <div className="absolute inset-0 flex items-center justify-center bg-navy/80 rounded-lg">
-            <p className="text-lightest-slate font-mono text-sm text-center">
-              Press arrow keys or WASD to start
-            </p>
-          </div>
-        )}
-
-        {gameOver && (
-          <div className="absolute inset-0 flex items-center justify-center bg-navy/80 rounded-lg">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-primary mb-2">Game Over!</p>
-              <p className="text-lightest-slate font-mono text-sm">
-                Score: {score}
+          {!started && !gameOver && (
+            <div className="absolute inset-0 flex items-center justify-center bg-navy/80 rounded-lg">
+              <p className="text-lightest-slate font-mono text-sm text-center">
+                Press arrow keys or WASD to start
               </p>
             </div>
-          </div>
-        )}
+          )}
+
+          {gameOver && showSubmit && score > 0 && (
+            <ScoreSubmit
+              score={score}
+              onSubmitted={handleScoreSubmitted}
+              onSkip={handleSkipSubmit}
+            />
+          )}
+
+          {gameOver && !showSubmit && (
+            <div className="absolute inset-0 flex items-center justify-center bg-navy/80 rounded-lg">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-primary mb-2">Game Over!</p>
+                <p className="text-lightest-slate font-mono text-sm">
+                  Score: {score}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Leaderboard - right side on desktop, below on mobile */}
+      <div className="w-full lg:w-auto">
+        <Leaderboard refreshKey={leaderboardKey} />
       </div>
     </div>
   )
