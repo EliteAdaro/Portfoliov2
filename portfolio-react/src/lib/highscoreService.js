@@ -9,18 +9,40 @@ const RATE_LIMIT_MS = 30_000
 const MAX_SCORE = 3970
 
 /**
- * Fetch top highscores
+ * Get ISO date string for a time period offset from now
+ * @param {'daily'|'weekly'|'monthly'|'all'} period
+ * @returns {string|null} ISO string or null for all-time
+ */
+function getPeriodStart(period) {
+  if (period === 'all') return null
+  const now = new Date()
+  if (period === 'daily') now.setHours(0, 0, 0, 0)
+  else if (period === 'weekly') now.setDate(now.getDate() - 7)
+  else if (period === 'monthly') now.setMonth(now.getMonth() - 1)
+  return now.toISOString()
+}
+
+/**
+ * Fetch top highscores, optionally filtered by time period
  * @param {number} limit - Number of scores to fetch
+ * @param {'daily'|'weekly'|'monthly'|'all'} period - Time period filter
  * @returns {Promise<Array>} - Array of { id, name, score, created_at }
  */
-export async function getHighscores(limit = 10) {
+export async function getHighscores(limit = 10, period = 'all') {
   if (!supabase) return []
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('snake_highscores')
     .select('id, name, score, created_at')
     .order('score', { ascending: false })
     .limit(limit)
+
+  const periodStart = getPeriodStart(period)
+  if (periodStart) {
+    query = query.gte('created_at', periodStart)
+  }
+
+  const { data, error } = await query
 
   if (error) {
     console.error('Failed to fetch highscores:', error.message)

@@ -68,7 +68,7 @@ export default function SnakeSettings({ settings, onChange }) {
               {COLOR_PRESETS.map((preset) => (
                 <button
                   key={preset.label}
-                  onClick={() => update('snakeColor', preset.snake) || update('snakeAltColor', preset.snakeAlt)}
+                  onClick={() => onChange({ ...settings, snakeColor: preset.snake, snakeAltColor: preset.snakeAlt })}
                   className={`w-7 h-7 rounded-full border-2 transition-all ${
                     settings.snakeColor === preset.snake
                       ? 'border-white scale-110'
@@ -87,11 +87,9 @@ export default function SnakeSettings({ settings, onChange }) {
                 value={settings.snakeColor}
                 onChange={(e) => {
                   const hex = e.target.value
-                  // Generate alt color (slightly darker)
                   const r = Math.max(0, parseInt(hex.slice(1, 3), 16) - 20)
                   const g = Math.max(0, parseInt(hex.slice(3, 5), 16) - 20)
                   const b = Math.max(0, parseInt(hex.slice(5, 7), 16) - 20)
-                  update('snakeColor', hex)
                   onChange({ ...settings, snakeColor: hex, snakeAltColor: `rgb(${r},${g},${b})` })
                 }}
                 className="w-6 h-6 rounded cursor-pointer border-0 bg-transparent"
