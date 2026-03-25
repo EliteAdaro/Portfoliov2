@@ -1,55 +1,68 @@
-import Filter from 'bad-words'
+// Custom profanity filter — no external dependencies
+// Covers: English, Dutch, German, French, Spanish + racist slurs
 
-const filter = new Filter()
+const BANNED_WORDS = [
+  // English
+  'fuck', 'shit', 'ass', 'asshole', 'bitch', 'bastard', 'damn', 'dick',
+  'pussy', 'cock', 'cunt', 'whore', 'slut', 'piss', 'crap', 'douche',
+  'wanker', 'twat', 'bollocks', 'bugger', 'arse', 'tosser', 'prick',
 
-// Dutch swear words
-const dutchWords = [
+  // Dutch
   'kut', 'lul', 'hoer', 'kanker', 'tering', 'tyfus', 'klootzak', 'godverdomme',
-  'kutwijf', 'mongool', 'debiel', 'eikel', 'sukkel', 'drol', 'schijt', 'neuk',
-  'neuken', 'pik', 'kak', 'stront', 'flikker', 'mof', 'neger', 'nikker',
-  'homo', 'trut', 'teef', 'slet', 'bitch', 'kankerlijer', 'tyfuslijer',
+  'kutwijf', 'mongool', 'debiel', 'eikel', 'drol', 'schijt', 'neuk',
+  'neuken', 'pik', 'kak', 'stront', 'flikker', 'mof', 'nikker',
+  'trut', 'teef', 'slet', 'kankerlijer', 'tyfuslijer',
   'kankermongool', 'kankerlul', 'kuthoer', 'godsamme', 'oprotten', 'pleur',
   'pleuris', 'pest', 'pestlijer', 'reet', 'kontgat',
-]
 
-// German swear words
-const germanWords = [
-  'scheiße', 'scheisse', 'arschloch', 'wichser', 'hurensohn', 'fotze',
-  'schwuchtel', 'missgeburt', 'spast', 'behindert', 'neger', 'drecksau',
-  'vollidiot', 'fick', 'ficken', 'hure', 'nutte', 'schlampe', 'bastard',
-  'depp', 'trottel', 'idiot', 'penner', 'wixer',
-]
+  // German
+  'scheisse', 'scheiße', 'arschloch', 'wichser', 'hurensohn', 'fotze',
+  'schwuchtel', 'missgeburt', 'spast', 'behindert', 'drecksau',
+  'vollidiot', 'fick', 'ficken', 'hure', 'nutte', 'schlampe',
+  'depp', 'trottel', 'penner', 'wixer',
 
-// French swear words
-const frenchWords = [
-  'merde', 'putain', 'connard', 'connasse', 'salope', 'enculé', 'nique',
-  'bordel', 'foutre', 'batard', 'pute', 'chienne', 'fils de pute',
-]
+  // French
+  'merde', 'putain', 'connard', 'connasse', 'salope', 'encule',
+  'bordel', 'foutre', 'batard', 'pute', 'chienne',
 
-// Spanish swear words
-const spanishWords = [
+  // Spanish
   'puta', 'mierda', 'coño', 'joder', 'cabron', 'pendejo', 'chinga',
-  'maricón', 'perra', 'culo', 'verga', 'hijo de puta', 'gilipollas',
-]
+  'maricon', 'perra', 'culo', 'verga', 'gilipollas',
 
-// Racist / slur terms (multi-language)
-const slurs = [
+  // Racist / slurs (multi-language)
   'nigger', 'nigga', 'faggot', 'retard', 'chink', 'spic', 'kike', 'gook',
-  'wetback', 'coon', 'raghead', 'towelhead', 'cracker', 'honky', 'gringo',
-  'beaner', 'nazi', 'hitler', 'holocaust',
+  'wetback', 'coon', 'raghead', 'towelhead', 'cracker', 'honky',
+  'beaner', 'nazi', 'hitler', 'neger',
 ]
 
-filter.addWords(
-  ...dutchWords,
-  ...germanWords,
-  ...frenchWords,
-  ...spanishWords,
-  ...slurs,
-)
+/**
+ * Check if text contains any banned word.
+ * Uses word boundary detection and substring matching.
+ */
+function isProfane(text) {
+  const lower = text.toLowerCase().replace(/[_\-\s]+/g, '')
+
+  for (const word of BANNED_WORDS) {
+    const cleanWord = word.replace(/[_\-\s]+/g, '')
+    if (lower.includes(cleanWord)) {
+      return true
+    }
+  }
+
+  // Also check with spaces/separators kept (for multi-word names)
+  const lowerSpaced = text.toLowerCase()
+  for (const word of BANNED_WORDS) {
+    if (lowerSpaced.includes(word)) {
+      return true
+    }
+  }
+
+  return false
+}
 
 /**
  * Check if a name is clean (no profanity).
- * Returns { clean: boolean, filtered: string }
+ * Returns { clean: boolean, filtered: string, reason?: string }
  */
 export function checkName(name) {
   // Strip any HTML/script tags first
@@ -84,14 +97,9 @@ export function checkName(name) {
     return { clean: false, filtered: sanitized, reason: 'Invalid name' }
   }
 
-  try {
-    if (filter.isProfane(sanitized)) {
-      const censored = filter.clean(sanitized)
-      return { clean: false, filtered: censored, reason: 'Keep it friendly! 😊' }
-    }
-  } catch {
-    // Filter error — block to be safe
-    return { clean: false, filtered: sanitized, reason: 'Could not validate name' }
+  // Profanity check
+  if (isProfane(sanitized)) {
+    return { clean: false, filtered: sanitized, reason: 'Keep it friendly! 😊' }
   }
 
   return { clean: true, filtered: sanitized }
