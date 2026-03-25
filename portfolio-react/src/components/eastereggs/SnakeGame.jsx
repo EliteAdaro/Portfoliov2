@@ -14,6 +14,7 @@ export default function SnakeGame() {
   const [showSubmit, setShowSubmit] = useState(false)
   const [leaderboardKey, setLeaderboardKey] = useState(0)
   const dirRef = useRef({ x: 1, y: 0 })
+  const nextDirRef = useRef(null)
   const gameRef = useRef(null)
 
   const initGame = useCallback(() => {
@@ -32,6 +33,7 @@ export default function SnakeGame() {
 
   const restart = useCallback(() => {
     dirRef.current = { x: 1, y: 0 }
+    nextDirRef.current = null
     gameRef.current = initGame()
     setScore(0)
     setGameOver(false)
@@ -78,10 +80,12 @@ export default function SnakeGame() {
       if (!dir) return
       e.preventDefault()
 
-      // Prevent reversing direction
-      const cur = dirRef.current
-      if (dir.x !== -cur.x || dir.y !== -cur.y) {
-        dirRef.current = dir
+      // Use queued direction if exists, otherwise current direction
+      // This prevents quick double-taps from reversing into yourself
+      const cur = nextDirRef.current || dirRef.current
+      const isReverse = (dir.x + cur.x === 0 && dir.y + cur.y === 0)
+      if (!isReverse) {
+        nextDirRef.current = dir
       }
 
       if (!started && !gameOver) {
@@ -99,6 +103,12 @@ export default function SnakeGame() {
     const interval = setInterval(() => {
       const game = gameRef.current
       if (!game) return
+
+      // Apply queued direction
+      if (nextDirRef.current) {
+        dirRef.current = nextDirRef.current
+        nextDirRef.current = null
+      }
 
       const head = { ...game.snake[0] }
       head.x += dirRef.current.x
