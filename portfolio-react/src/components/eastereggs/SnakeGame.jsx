@@ -77,63 +77,140 @@ function drawApple(ctx, x, y, size) {
   ctx.restore()
 }
 
-// Draw snake head with eyes
-function drawHead(ctx, seg, nextSeg, size) {
-  const x = seg.x * size + 1
-  const y = seg.y * size + 1
-  const s = size - 2
-  const cx = x + s / 2
-  const cy = y + s / 2
+// Color for body segment based on position (gradient along the snake)
+function getBodyColor(index, total) {
+  // Head-end: bright cyan → Tail-end: deep green
+  const t = total > 1 ? index / (total - 1) : 0
+  const r = Math.round(100 - t * 42)
+  const g = Math.round(255 - t * 50)
+  const b = Math.round(218 - t * 60)
+  return `rgb(${r}, ${g}, ${b})`
+}
 
-  // Head direction
+// Draw connected body segment — rounded rect that overlaps neighbors for smooth look
+function drawBodySegment(ctx, seg, prev, next, index, total, size) {
+  const cx = seg.x * size + size / 2
+  const cy = seg.y * size + size / 2
+  const color = getBodyColor(index, total)
+  const w = size - 4  // segment width
+  const h = size - 4
+
+  ctx.fillStyle = color
+
+  // Main body cell
+  ctx.beginPath()
+  ctx.roundRect(seg.x * size + 2, seg.y * size + 2, w, h, 4)
+  ctx.fill()
+
+  // Connector to previous segment (fills the gap between cells)
+  if (prev) {
+    const dx = prev.x - seg.x
+    const dy = prev.y - seg.y
+    if (dx !== 0) {
+      // Horizontal connector
+      const connX = dx > 0 ? seg.x * size + size - 2 : seg.x * size - size + 6
+      ctx.fillRect(connX, seg.y * size + 3, size - 4, size - 6)
+    } else if (dy !== 0) {
+      // Vertical connector
+      const connY = dy > 0 ? seg.y * size + size - 2 : seg.y * size - size + 6
+      ctx.fillRect(seg.x * size + 3, connY, size - 6, size - 4)
+    }
+  }
+
+  // Subtle inner highlight (scale pattern)
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.08)'
+  ctx.beginPath()
+  ctx.arc(cx - 1, cy - 1, size / 4, 0, Math.PI * 2)
+  ctx.fill()
+}
+
+// Draw snake head with eyes and tongue
+function drawHead(ctx, seg, nextSeg, size) {
+  const s = size - 2
+  const cx = seg.x * size + size / 2
+  const cy = seg.y * size + size / 2
+
   const angle = nextSeg ? getAngle(nextSeg, seg) : 0
 
   ctx.save()
   ctx.translate(cx, cy)
   ctx.rotate(angle)
 
-  // Head shape (rounded rectangle)
-  ctx.fillStyle = '#64ffda'
+  // Glow
   ctx.shadowColor = '#64ffda'
-  ctx.shadowBlur = 10
+  ctx.shadowBlur = 12
+
+  // Head shape — slightly wider at front
+  ctx.fillStyle = '#64ffda'
   ctx.beginPath()
-  ctx.roundRect(-s / 2, -s / 2, s, s, 5)
+  ctx.roundRect(-s / 2, -s / 2, s, s, [3, 6, 6, 3])
   ctx.fill()
   ctx.shadowBlur = 0
 
-  // Eyes
-  const eyeY = -s * 0.15
-  const eyeX = s * 0.22
-  const eyeR = s * 0.12
-
-  // Eye whites
-  ctx.fillStyle = '#0a192f'
+  // Darker scale pattern on head
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'
   ctx.beginPath()
-  ctx.arc(eyeX, eyeY - eyeR * 0.5, eyeR * 1.2, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.beginPath()
-  ctx.arc(eyeX, eyeY + eyeR * 1.5, eyeR * 1.2, 0, Math.PI * 2)
+  ctx.roundRect(-s / 2 + 1, -s / 2 + 1, s / 2, s - 2, [2, 0, 0, 2])
   ctx.fill()
 
-  // Pupils
+  // Tongue (flickering red tongue)
+  ctx.strokeStyle = '#e74c3c'
+  ctx.lineWidth = 1.5
+  ctx.lineCap = 'round'
+  ctx.beginPath()
+  ctx.moveTo(s / 2, 0)
+  ctx.lineTo(s / 2 + 5, 0)
+  // Fork
+  ctx.moveTo(s / 2 + 4, 0)
+  ctx.lineTo(s / 2 + 7, -2)
+  ctx.moveTo(s / 2 + 4, 0)
+  ctx.lineTo(s / 2 + 7, 2)
+  ctx.stroke()
+
+  // Eyes — positioned on the side of the head
+  const eyeOffX = s * 0.15
+  const eyeOffY = s * 0.25
+  const eyeR = s * 0.14
+
+  // Left eye
   ctx.fillStyle = '#fff'
   ctx.beginPath()
-  ctx.arc(eyeX + 1, eyeY - eyeR * 0.5, eyeR * 0.6, 0, Math.PI * 2)
+  ctx.arc(eyeOffX, -eyeOffY, eyeR, 0, Math.PI * 2)
+  ctx.fill()
+
+  // Right eye
+  ctx.beginPath()
+  ctx.arc(eyeOffX, eyeOffY, eyeR, 0, Math.PI * 2)
+  ctx.fill()
+
+  // Pupils (looking forward)
+  ctx.fillStyle = '#0a192f'
+  const pupilR = eyeR * 0.6
+  ctx.beginPath()
+  ctx.arc(eyeOffX + pupilR * 0.4, -eyeOffY, pupilR, 0, Math.PI * 2)
   ctx.fill()
   ctx.beginPath()
-  ctx.arc(eyeX + 1, eyeY + eyeR * 1.5, eyeR * 0.6, 0, Math.PI * 2)
+  ctx.arc(eyeOffX + pupilR * 0.4, eyeOffY, pupilR, 0, Math.PI * 2)
+  ctx.fill()
+
+  // Eye shine
+  ctx.fillStyle = '#fff'
+  ctx.beginPath()
+  ctx.arc(eyeOffX + pupilR * 0.5, -eyeOffY - pupilR * 0.3, pupilR * 0.35, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.beginPath()
+  ctx.arc(eyeOffX + pupilR * 0.5, eyeOffY - pupilR * 0.3, pupilR * 0.35, 0, Math.PI * 2)
   ctx.fill()
 
   ctx.restore()
 }
 
-// Draw snake tail (tapered end)
-function drawTail(ctx, seg, prevSeg, size) {
-  const x = seg.x * size + 1
-  const y = seg.y * size + 1
+// Draw snake tail (tapered, smooth end)
+function drawTail(ctx, seg, prevSeg, total, size) {
   const s = size - 2
-  const cx = x + s / 2
-  const cy = y + s / 2
+  const cx = seg.x * size + size / 2
+  const cy = seg.y * size + size / 2
+  const color = getBodyColor(total - 1, total)
 
   const angle = prevSeg ? getAngle(seg, prevSeg) : 0
 
@@ -141,31 +218,27 @@ function drawTail(ctx, seg, prevSeg, size) {
   ctx.translate(cx, cy)
   ctx.rotate(angle)
 
-  // Tapered tail shape
-  ctx.fillStyle = '#3ab89a'
+  // Smooth tapered tail
+  ctx.fillStyle = color
   ctx.beginPath()
-  ctx.moveTo(-s / 2, -s / 3)        // narrow start
-  ctx.lineTo(s / 2, -s / 2)         // wide end top
-  ctx.quadraticCurveTo(s / 2 + 2, 0, s / 2, s / 2) // rounded wide end
-  ctx.lineTo(-s / 2, s / 3)         // narrow start bottom
-  ctx.quadraticCurveTo(-s / 2 - 2, 0, -s / 2, -s / 3) // rounded narrow
+  ctx.moveTo(-s / 2 - 2, 0)                         // pointy tip
+  ctx.quadraticCurveTo(-s / 4, -s / 2.5, s / 3, -s / 2) // curve to wide top
+  ctx.lineTo(s / 2, -s / 2)                          // top right
+  ctx.lineTo(s / 2, s / 2)                           // bottom right
+  ctx.lineTo(s / 3, s / 2)                           // bottom edge
+  ctx.quadraticCurveTo(-s / 4, s / 2.5, -s / 2 - 2, 0)  // curve back to tip
+  ctx.fill()
+
+  // Highlight stripe
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'
+  ctx.beginPath()
+  ctx.moveTo(-s / 4, 0)
+  ctx.quadraticCurveTo(0, -s / 4, s / 3, -s / 3)
+  ctx.lineTo(s / 3, -s / 6)
+  ctx.quadraticCurveTo(0, -s / 6, -s / 4, 0)
   ctx.fill()
 
   ctx.restore()
-}
-
-// Draw body segment
-function drawBody(ctx, seg, size) {
-  ctx.fillStyle = '#4fd1b0'
-  ctx.beginPath()
-  ctx.roundRect(
-    seg.x * size + 2,
-    seg.y * size + 2,
-    size - 4,
-    size - 4,
-    4,
-  )
-  ctx.fill()
 }
 
 export default function SnakeGame() {
@@ -176,9 +249,10 @@ export default function SnakeGame() {
   const [showSubmit, setShowSubmit] = useState(false)
   const [leaderboardKey, setLeaderboardKey] = useState(0)
   const dirRef = useRef({ x: 1, y: 0 })
-  const nextDirRef = useRef(null)
+  const dirQueueRef = useRef([])
   const gameRef = useRef(null)
   const scoreRef = useRef(0)
+  const gameOverRef = useRef(false)
 
   const initGame = useCallback(() => {
     const snake = [
@@ -200,9 +274,10 @@ export default function SnakeGame() {
 
   const restart = useCallback(() => {
     dirRef.current = { x: 1, y: 0 }
-    nextDirRef.current = null
+    dirQueueRef.current = []
     gameRef.current = initGame()
     scoreRef.current = 0
+    gameOverRef.current = false
     setScore(0)
     setGameOver(false)
     setShowSubmit(false)
@@ -210,6 +285,7 @@ export default function SnakeGame() {
   }, [initGame])
 
   const handleGameOver = useCallback(() => {
+    gameOverRef.current = true
     setGameOver(true)
     setShowSubmit(true)
   }, [])
@@ -251,11 +327,16 @@ export default function SnakeGame() {
       if (!dir) return
       e.preventDefault()
 
-      // Check against queued direction to prevent quick reverse
-      const cur = nextDirRef.current || dirRef.current
-      const isReverse = dir.x + cur.x === 0 && dir.y + cur.y === 0
-      if (!isReverse) {
-        nextDirRef.current = dir
+      // Direction queue: max 2 entries, each checked against the last
+      const queue = dirQueueRef.current
+      if (queue.length >= 2) return // don't buffer more than 2
+
+      // Check against the last queued direction, or the current direction
+      const lastDir = queue.length > 0 ? queue[queue.length - 1] : dirRef.current
+      const isReverse = dir.x + lastDir.x === 0 && dir.y + lastDir.y === 0
+      const isSame = dir.x === lastDir.x && dir.y === lastDir.y
+      if (!isReverse && !isSame) {
+        queue.push(dir)
       }
 
       if (!started && !gameOver) {
@@ -272,15 +353,23 @@ export default function SnakeGame() {
     if (!started || gameOver) return
 
     let timeout
+    let running = true
 
     const tick = () => {
-      const game = gameRef.current
-      if (!game) return
+      if (!running || gameOverRef.current) return
 
-      // Apply queued direction
-      if (nextDirRef.current) {
-        dirRef.current = nextDirRef.current
-        nextDirRef.current = null
+      const game = gameRef.current
+      const canvas = canvasRef.current
+      if (!game || !canvas) {
+        // Retry next frame if canvas isn't ready yet
+        timeout = setTimeout(tick, 16)
+        return
+      }
+
+      // Dequeue one direction per tick
+      const queue = dirQueueRef.current
+      if (queue.length > 0) {
+        dirRef.current = queue.shift()
       }
 
       const head = { ...game.snake[0] }
@@ -293,17 +382,22 @@ export default function SnakeGame() {
         return
       }
 
-      // Self collision (skip the tail because it will move away)
-      const checkSnake = game.snake.slice(0, -1)
-      if (checkSnake.some((s) => s.x === head.x && s.y === head.y)) {
-        handleGameOver()
-        return
+      // Self collision — check all segments except the tail
+      // (tail moves away this tick, unless we eat food, but then
+      //  the tail stays and head can't be where food+tail overlap)
+      const willEat = head.x === game.food.x && head.y === game.food.y
+      const checkTo = willEat ? game.snake.length : game.snake.length - 1
+      for (let i = 0; i < checkTo; i++) {
+        if (game.snake[i].x === head.x && game.snake[i].y === head.y) {
+          handleGameOver()
+          return
+        }
       }
 
       game.snake.unshift(head)
 
       // Eat food
-      if (head.x === game.food.x && head.y === game.food.y) {
+      if (willEat) {
         scoreRef.current += 10
         setScore(scoreRef.current)
         game.food = spawnFood(game.snake)
@@ -312,8 +406,6 @@ export default function SnakeGame() {
       }
 
       // === DRAW ===
-      const canvas = canvasRef.current
-      if (!canvas) return
       const ctx = canvas.getContext('2d')
 
       // Background
@@ -337,26 +429,39 @@ export default function SnakeGame() {
       // Apple
       drawApple(ctx, game.food.x * CELL, game.food.y * CELL, CELL)
 
-      // Snake body (middle segments)
+      // Snake — draw from tail to head so head is on top
       const { snake } = game
-      for (let i = 1; i < snake.length - 1; i++) {
-        drawBody(ctx, snake[i], CELL)
+      const len = snake.length
+
+      // Tail (last segment)
+      if (len > 1) {
+        drawTail(ctx, snake[len - 1], snake[len - 2], len, CELL)
       }
 
-      // Snake tail
-      if (snake.length > 1) {
-        drawTail(ctx, snake[snake.length - 1], snake[snake.length - 2], CELL)
+      // Body segments (middle, drawn back-to-front)
+      for (let i = len - 2; i >= 1; i--) {
+        drawBodySegment(
+          ctx, snake[i],
+          snake[i - 1],     // toward head
+          snake[i + 1],     // toward tail
+          i, len, CELL,
+        )
       }
 
-      // Snake head (drawn last so it's on top)
-      drawHead(ctx, snake[0], snake.length > 1 ? snake[1] : null, CELL)
+      // Head (first segment, drawn last)
+      drawHead(ctx, snake[0], len > 1 ? snake[1] : null, CELL)
 
       // Schedule next tick with dynamic speed
-      timeout = setTimeout(tick, getSpeed())
+      if (running && !gameOverRef.current) {
+        timeout = setTimeout(tick, getSpeed())
+      }
     }
 
     timeout = setTimeout(tick, getSpeed())
-    return () => clearTimeout(timeout)
+    return () => {
+      running = false
+      clearTimeout(timeout)
+    }
   }, [started, gameOver, handleGameOver, getSpeed])
 
   return (
