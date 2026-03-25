@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Trophy, Medal, Clock, Calendar, CalendarDays, Crown } from 'lucide-react'
 import { getHighscores } from '../../lib/highscoreService'
+import { MAX_SCORE } from './snakeEngine'
 
 const TABS = [
   { key: 'all', label: 'All-Time', icon: Crown },
@@ -119,22 +120,31 @@ export default function Leaderboard({ refreshKey }) {
                   <li
                     key={entry.id}
                     className={`flex items-center gap-2 py-1.5 px-2 rounded text-xs font-mono transition-colors ${
-                      i === 0
-                        ? 'bg-yellow-400/10 border border-yellow-400/20'
-                        : i < 3
-                          ? 'bg-primary/5'
-                          : 'hover:bg-navy-lighter/30'
+                      entry.score >= MAX_SCORE
+                        ? 'bg-gradient-to-r from-yellow-400/20 to-amber-500/10 border border-yellow-400/30'
+                        : i === 0
+                          ? 'bg-yellow-400/10 border border-yellow-400/20'
+                          : i < 3
+                            ? 'bg-primary/5'
+                            : 'hover:bg-navy-lighter/30'
                     }`}
                   >
-                    {getRankIcon(i)}
-                    <span className="flex-1 truncate text-lightest-slate">
+                    {entry.score >= MAX_SCORE ? (
+                      <span className="w-4 text-center" title="Perfect Game!">🏆</span>
+                    ) : getRankIcon(i)}
+                    <span className={`flex-1 truncate ${
+                      entry.score >= MAX_SCORE ? 'text-yellow-300 font-semibold' : 'text-lightest-slate'
+                    }`}>
                       {entry.name}
+                      {entry.score >= MAX_SCORE && (
+                        <span className="ml-1 text-[9px] text-yellow-400/80">PERFECT</span>
+                      )}
                     </span>
                     <span className="text-[9px] text-slate-500 hidden sm:block">
                       {formatDate(entry.created_at)}
                     </span>
                     <span className={`font-semibold min-w-[36px] text-right ${
-                      i === 0 ? 'text-yellow-400' : 'text-primary'
+                      entry.score >= MAX_SCORE ? 'text-yellow-400' : i === 0 ? 'text-yellow-400' : 'text-primary'
                     }`}>
                       {entry.score}
                     </span>
