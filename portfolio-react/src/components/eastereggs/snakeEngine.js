@@ -6,6 +6,7 @@ export const GRID = 20
 export const CELL = 20
 export const BASE_SPEED = 140
 export const MIN_SPEED = 60
+export const MAX_SCORE = (GRID * GRID - 3) * 10 // 3970
 
 /**
  * Spawn food on a random free cell (not occupied by the snake)
@@ -46,7 +47,7 @@ export function getSpeed(score) {
  * Process one game tick. Returns result object.
  * @param {object} game - { snake, food }
  * @param {object} direction - { x, y }
- * @returns {{ alive: boolean, ate: boolean, game: object }}
+ * @returns {{ alive: boolean, ate: boolean, won: boolean, game: object }}
  */
 export function tick(game, direction) {
   const head = { ...game.snake[0] }
@@ -55,7 +56,7 @@ export function tick(game, direction) {
 
   // Wall collision
   if (head.x < 0 || head.x >= GRID || head.y < 0 || head.y >= GRID) {
-    return { alive: false, ate: false, game }
+    return { alive: false, ate: false, won: false, game }
   }
 
   // Self collision
@@ -63,17 +64,22 @@ export function tick(game, direction) {
   const checkTo = willEat ? game.snake.length : game.snake.length - 1
   for (let i = 0; i < checkTo; i++) {
     if (game.snake[i].x === head.x && game.snake[i].y === head.y) {
-      return { alive: false, ate: false, game }
+      return { alive: false, ate: false, won: false, game }
     }
   }
 
   game.snake.unshift(head)
 
   if (willEat) {
+    // Check if the snake fills the entire board = WIN
+    if (game.snake.length >= GRID * GRID) {
+      game.food = { x: -1, y: -1 } // hide food off-screen
+      return { alive: true, ate: true, won: true, game }
+    }
     game.food = spawnFood(game.snake)
-    return { alive: true, ate: true, game }
+    return { alive: true, ate: true, won: false, game }
   } else {
     game.snake.pop()
-    return { alive: true, ate: false, game }
+    return { alive: true, ate: false, won: false, game }
   }
 }

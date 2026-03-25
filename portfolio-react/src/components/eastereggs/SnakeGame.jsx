@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Leaderboard from './Leaderboard'
 import ScoreSubmit from './ScoreSubmit'
 import SnakeSettings, { DEFAULT_SETTINGS } from './SnakeSettings'
-import { createGame, getSpeed, tick as engineTick, GRID, CELL } from './snakeEngine'
+import { createGame, getSpeed, tick as engineTick, GRID, CELL, MAX_SCORE } from './snakeEngine'
 import { createKeyHandler, dequeueDirection } from './snakeInput'
 import {
   drawBoard, drawFood, drawBodySegment, drawHead, drawTail,
@@ -19,6 +19,7 @@ export default function SnakeGame() {
   const [gameOver, setGameOver] = useState(false)
   const [started, setStarted] = useState(false)
   const [showSubmit, setShowSubmit] = useState(false)
+  const [gameWon, setGameWon] = useState(false)
   const [leaderboardKey, setLeaderboardKey] = useState(0)
   const [prankMsg, setPrankMsg] = useState(null)
   const [settings, setSettings] = useState(() => {
@@ -54,6 +55,7 @@ export default function SnakeGame() {
     setPrankMsg(null)
     setScore(0)
     setGameOver(false)
+    setGameWon(false)
     setShowSubmit(false)
     setStarted(true)
   }, [])
@@ -127,6 +129,15 @@ export default function SnakeGame() {
         scoreRef.current += 10
         setScore(scoreRef.current)
         onFoodEaten(april)
+      }
+
+      // Win condition — snake fills the entire board
+      if (result.won) {
+        gameOverRef.current = true
+        setGameWon(true)
+        setGameOver(true)
+        setShowSubmit(true)
+        return
       }
 
       // April Fools — maybe trigger a prank
@@ -239,8 +250,18 @@ export default function SnakeGame() {
           {gameOver && !showSubmit && (
             <div className="absolute inset-0 flex items-center justify-center bg-navy/80 rounded-lg">
               <div className="text-center">
-                <p className="text-2xl font-bold text-primary mb-2">Game Over!</p>
-                <p className="text-lightest-slate font-mono text-sm">Score: {score}</p>
+                {gameWon ? (
+                  <>
+                    <p className="text-2xl font-bold text-yellow-400 mb-1">🏆 PERFECT GAME! 🏆</p>
+                    <p className="text-primary font-mono text-sm mb-1">You filled the entire board!</p>
+                    <p className="text-lightest-slate font-mono text-xs">Max Score: {MAX_SCORE}</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-2xl font-bold text-primary mb-2">Game Over!</p>
+                    <p className="text-lightest-slate font-mono text-sm">Score: {score}</p>
+                  </>
+                )}
               </div>
             </div>
           )}
