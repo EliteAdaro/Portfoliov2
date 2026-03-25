@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { checkName } from '../../lib/profanityFilter'
 import { submitHighscore } from '../../lib/highscoreService'
 
-export default function ScoreSubmit({ score, onSubmitted, onSkip }) {
+export default function ScoreSubmit({ score, difficulty, onSubmitted, onSkip }) {
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -18,7 +18,7 @@ export default function ScoreSubmit({ score, onSubmitted, onSkip }) {
     }
 
     setSubmitting(true)
-    const { success, error: submitError } = await submitHighscore(result.filtered, score)
+    const { success, error: submitError } = await submitHighscore(result.filtered, score, difficulty)
     setSubmitting(false)
 
     if (success) {

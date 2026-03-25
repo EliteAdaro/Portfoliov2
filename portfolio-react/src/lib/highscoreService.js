@@ -8,10 +8,11 @@ const RATE_LIMIT_MS = 30_000
 // Max realistic score (20x20 grid minus 3 start segments = 397 food × 10 pts)
 const MAX_SCORE = 3970
 
+// Valid difficulty keys
+const VALID_DIFFICULTIES = ['easy', 'normal', 'hard', 'expert', 'insane']
+
 /**
  * Get ISO date string for a time period offset from now
- * @param {'daily'|'weekly'|'monthly'|'all'} period
- * @returns {string|null} ISO string or null for all-time
  */
 function getPeriodStart(period) {
   if (period === 'all') return null
@@ -23,23 +24,28 @@ function getPeriodStart(period) {
 }
 
 /**
- * Fetch top highscores, optionally filtered by time period
- * @param {number} limit - Number of scores to fetch
- * @param {'daily'|'weekly'|'monthly'|'all'} period - Time period filter
- * @returns {Promise<Array>} - Array of { id, name, score, created_at }
+ * Fetch top highscores, optionally filtered by time period and difficulty
+ * @param {number} limit
+ * @param {'daily'|'weekly'|'monthly'|'all'} period
+ * @param {string|null} difficulty - filter by difficulty, null = all
+ * @returns {Promise<Array>}
  */
-export async function getHighscores(limit = 10, period = 'all') {
+export async function getHighscores(limit = 10, period = 'all', difficulty = null) {
   if (!supabase) return []
 
   let query = supabase
     .from('snake_highscores')
-    .select('id, name, score, created_at')
+    .select('id, name, score, difficulty, created_at')
     .order('score', { ascending: false })
     .limit(limit)
 
   const periodStart = getPeriodStart(period)
   if (periodStart) {
     query = query.gte('created_at', periodStart)
+  }
+
+  if (difficulty && VALID_DIFFICULTIES.includes(difficulty)) {
+    query = query.eq('difficulty', difficulty)
   }
 
   const { data, error } = await query
@@ -56,9 +62,10 @@ export async function getHighscores(limit = 10, period = 'all') {
  * Submit a new highscore with full validation
  * @param {string} name - Player name
  * @param {number} score - Player score
+ * @param {string} difficulty - Difficulty level
  * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
  */
-export async function submitHighscore(name, score) {
+export async function submitHighscore(name, score, difficulty = 'normal') {
   if (!supabase) {
     return { success: false, error: 'Database not connected' }
   }
@@ -70,21 +77,23 @@ export async function submitHighscore(name, score) {
     return { success: false, error: `Wait ${waitSec}s before submitting again` }
   }
 
-  // Validate score is a positive integer within realistic bounds
+  // Validate score
   if (typeof score !== 'number' || !Number.isInteger(score) || score <= 0) {
     return { success: false, error: 'Invalid score' }
   }
-
   if (score > MAX_SCORE) {
     return { success: false, error: 'Score exceeds maximum possible' }
   }
-
-  // Score must be a multiple of 10 (each food = 10 points)
   if (score % 10 !== 0) {
     return { success: false, error: 'Invalid score' }
   }
 
-  // Re-validate name server-side (defense in depth)
+  // Validate difficulty
+  if (!VALID_DIFFICULTIES.includes(difficulty)) {
+    difficulty = 'normal'
+  }
+
+  // Re-validate name
   const nameCheck = checkName(name)
   if (!nameCheck.clean) {
     return { success: false, error: nameCheck.reason }
@@ -94,7 +103,7 @@ export async function submitHighscore(name, score) {
 
   const { data, error } = await supabase
     .from('snake_highscores')
-    .insert([{ name: nameCheck.filtered, score }])
+    .insert([{ name: nameCheck.filtered, score, difficulty }])
     .select()
     .single()
 

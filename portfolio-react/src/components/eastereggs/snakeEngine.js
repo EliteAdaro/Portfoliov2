@@ -4,9 +4,63 @@
 
 export const GRID = 20
 export const CELL = 20
-export const BASE_SPEED = 140
-export const MIN_SPEED = 60
 export const MAX_SCORE = (GRID * GRID - 3) * 10 // 3970
+
+/**
+ * Difficulty presets
+ * baseSpeed = starting tick delay (ms), lower = faster
+ * minSpeed = fastest possible tick delay (ms)
+ * accelRate = ms removed per 50 points scored
+ */
+export const DIFFICULTIES = {
+  easy: {
+    key: 'easy',
+    name: 'Easy',
+    icon: '🟢',
+    desc: 'Relaxed pace, gentle speed increase',
+    baseSpeed: 180,
+    minSpeed: 100,
+    accelRate: 5,
+  },
+  normal: {
+    key: 'normal',
+    name: 'Normal',
+    icon: '🟡',
+    desc: 'Balanced speed and acceleration',
+    baseSpeed: 140,
+    minSpeed: 60,
+    accelRate: 10,
+  },
+  hard: {
+    key: 'hard',
+    name: 'Hard',
+    icon: '🟠',
+    desc: 'Fast pace, aggressive acceleration',
+    baseSpeed: 110,
+    minSpeed: 45,
+    accelRate: 12,
+  },
+  expert: {
+    key: 'expert',
+    name: 'Expert',
+    icon: '🔴',
+    desc: 'Very fast, for experienced players',
+    baseSpeed: 85,
+    minSpeed: 35,
+    accelRate: 15,
+  },
+  insane: {
+    key: 'insane',
+    name: 'Insane',
+    icon: '💀',
+    desc: 'Extreme speed from the start',
+    baseSpeed: 60,
+    minSpeed: 25,
+    accelRate: 18,
+  },
+}
+
+export const DEFAULT_DIFFICULTY = 'normal'
 
 /**
  * Spawn food on a random free cell (not occupied by the snake)
@@ -36,11 +90,12 @@ export function createGame() {
 }
 
 /**
- * Calculate tick speed based on current score
+ * Calculate tick speed based on current score and difficulty
  */
-export function getSpeed(score) {
-  const speedup = Math.floor(score / 50) * 10
-  return Math.max(MIN_SPEED, BASE_SPEED - speedup)
+export function getSpeed(score, difficultyKey = DEFAULT_DIFFICULTY) {
+  const diff = DIFFICULTIES[difficultyKey] || DIFFICULTIES[DEFAULT_DIFFICULTY]
+  const speedup = Math.floor(score / 50) * diff.accelRate
+  return Math.max(diff.minSpeed, diff.baseSpeed - speedup)
 }
 
 /**
@@ -71,9 +126,8 @@ export function tick(game, direction) {
   game.snake.unshift(head)
 
   if (willEat) {
-    // Check if the snake fills the entire board = WIN
     if (game.snake.length >= GRID * GRID) {
-      game.food = { x: -1, y: -1 } // hide food off-screen
+      game.food = { x: -1, y: -1 }
       return { alive: true, ate: true, won: true, game }
     }
     game.food = spawnFood(game.snake)

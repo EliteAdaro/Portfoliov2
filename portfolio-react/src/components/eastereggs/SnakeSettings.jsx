@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Settings, ChevronDown, ChevronUp } from 'lucide-react'
+import { DIFFICULTIES, DEFAULT_DIFFICULTY } from './snakeEngine'
 
 const COLOR_PRESETS = [
   { name: 'Classic Green', snake: '#64ffda', snakeAlt: '#4fd1b0', label: 'green' },
@@ -51,6 +52,7 @@ export const DEFAULT_SETTINGS = {
   headStyle: 'advanced',
   tailStyle: 'advanced',
   foodStyle: 'apple',
+  difficulty: DEFAULT_DIFFICULTY,
 }
 
 export default function SnakeSettings({ settings, onChange }) {
@@ -73,6 +75,31 @@ export default function SnakeSettings({ settings, onChange }) {
 
       {open && (
         <div className="mt-2 p-4 bg-navy-light border border-navy-lighter rounded-lg space-y-4">
+          {/* Difficulty */}
+          <div>
+            <label className="text-xs font-mono text-slate-300 mb-2 block">Difficulty</label>
+            <div className="flex flex-wrap gap-1.5">
+              {Object.values(DIFFICULTIES).map((diff) => (
+                <button
+                  key={diff.key}
+                  onClick={() => update('difficulty', diff.key)}
+                  className={`flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-mono rounded border transition-all ${
+                    settings.difficulty === diff.key
+                      ? 'border-primary text-primary bg-primary/10'
+                      : 'border-navy-lighter text-slate-400 hover:border-slate-500'
+                  }`}
+                  title={diff.desc}
+                >
+                  <span>{diff.icon}</span>
+                  <span>{diff.name}</span>
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] font-mono text-slate-500 mt-1">
+              {DIFFICULTIES[settings.difficulty]?.desc}
+            </p>
+          </div>
+
           {/* Snake Color */}
           <div>
             <label className="text-xs font-mono text-slate-300 mb-2 block">Snake Color</label>

@@ -182,13 +182,13 @@ export default function SnakeGame() {
 
       // Schedule next tick (with April Fools speed modifier)
       if (running && !gameOverRef.current) {
-        const baseSpeed = getSpeed(scoreRef.current)
+        const baseSpeed = getSpeed(scoreRef.current, settingsRef.current.difficulty)
         const modifier = getSpeedModifier(april)
         timeout = setTimeout(gameTick, Math.round(baseSpeed * modifier))
       }
     }
 
-    const baseSpeed = getSpeed(scoreRef.current)
+    const baseSpeed = getSpeed(scoreRef.current, settingsRef.current.difficulty)
     timeout = setTimeout(gameTick, baseSpeed)
     return () => { running = false; clearTimeout(timeout) }
   }, [started, gameOver, handleGameOver])
@@ -242,6 +242,7 @@ export default function SnakeGame() {
           {gameOver && showSubmit && score > 0 && (
             <ScoreSubmit
               score={score}
+              difficulty={settings.difficulty}
               onSubmitted={handleScoreSubmitted}
               onSkip={handleSkipSubmit}
             />

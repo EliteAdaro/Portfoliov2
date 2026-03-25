@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Trophy, Medal, Clock, Calendar, CalendarDays, Crown } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Trophy, Medal, Clock, Calendar, CalendarDays, Crown, Filter } from 'lucide-react'
 import { getHighscores } from '../../lib/highscoreService'
-import { MAX_SCORE } from './snakeEngine'
+import { MAX_SCORE, DIFFICULTIES } from './snakeEngine'
 
 const TABS = [
   { key: 'all', label: 'All-Time', icon: Crown },
@@ -10,17 +10,23 @@ const TABS = [
   { key: 'daily', label: 'Today', icon: Clock },
 ]
 
+const DIFF_FILTERS = [
+  { key: null, label: 'All' },
+  ...Object.values(DIFFICULTIES).map((d) => ({ key: d.key, label: d.icon })),
+]
+
 export default function Leaderboard({ refreshKey }) {
   const [scores, setScores] = useState([])
   const [open, setOpen] = useState(true)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('all')
+  const [diffFilter, setDiffFilter] = useState(null)
 
   useEffect(() => {
     let mounted = true
     setLoading(true)
 
-    getHighscores(10, activeTab).then((data) => {
+    getHighscores(10, activeTab, diffFilter).then((data) => {
       if (mounted) {
         setScores(data)
         setLoading(false)
@@ -28,13 +34,18 @@ export default function Leaderboard({ refreshKey }) {
     })
 
     return () => { mounted = false }
-  }, [refreshKey, activeTab])
+  }, [refreshKey, activeTab, diffFilter])
 
   const getRankIcon = (index) => {
     if (index === 0) return <Trophy className="w-4 h-4 text-yellow-400" />
     if (index === 1) return <Medal className="w-4 h-4 text-gray-300" />
     if (index === 2) return <Medal className="w-4 h-4 text-amber-600" />
     return <span className="w-4 text-center text-xs text-slate-400 font-mono">{index + 1}</span>
+  }
+
+  const getDiffIcon = (diffKey) => {
+    const diff = DIFFICULTIES[diffKey]
+    return diff ? diff.icon : '🟡'
   }
 
   const formatDate = (dateStr) => {
@@ -79,8 +90,8 @@ export default function Leaderboard({ refreshKey }) {
               Leaderboard
             </h3>
 
-            {/* Tabs */}
-            <div className="flex gap-1 mb-3 p-0.5 bg-navy/50 rounded-md">
+            {/* Time period tabs */}
+            <div className="flex gap-1 mb-2 p-0.5 bg-navy/50 rounded-md">
               {TABS.map((tab) => {
                 const Icon = tab.icon
                 return (
@@ -98,6 +109,25 @@ export default function Leaderboard({ refreshKey }) {
                   </button>
                 )
               })}
+            </div>
+
+            {/* Difficulty filter */}
+            <div className="flex items-center gap-1 mb-3">
+              <Filter className="w-3 h-3 text-slate-500" />
+              {DIFF_FILTERS.map((f) => (
+                <button
+                  key={f.key ?? 'all'}
+                  onClick={() => setDiffFilter(f.key)}
+                  className={`px-1.5 py-0.5 text-[10px] font-mono rounded transition-all ${
+                    diffFilter === f.key
+                      ? 'bg-primary/20 text-primary border border-primary/30'
+                      : 'text-slate-500 hover:text-slate-300 border border-transparent'
+                  }`}
+                  title={f.key ? DIFFICULTIES[f.key]?.name : 'All difficulties'}
+                >
+                  {f.label}
+                </button>
+              ))}
             </div>
 
             {/* Score list */}
@@ -142,6 +172,12 @@ export default function Leaderboard({ refreshKey }) {
                     </span>
                     <span className="text-[9px] text-slate-500 hidden sm:block">
                       {formatDate(entry.created_at)}
+                    </span>
+                    <span
+                      className="text-[11px]"
+                      title={DIFFICULTIES[entry.difficulty]?.name || 'Normal'}
+                    >
+                      {getDiffIcon(entry.difficulty)}
                     </span>
                     <span className={`font-semibold min-w-[36px] text-right ${
                       entry.score >= MAX_SCORE ? 'text-yellow-400' : i === 0 ? 'text-yellow-400' : 'text-primary'
