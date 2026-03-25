@@ -56,7 +56,23 @@ export default function NotFoundPage() {
               </button>
             </div>
           ) : (
-            <SnakeGame />
+            <div className="space-y-6">
+              <SnakeGame />
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <a
+                  href="/"
+                  className="px-6 py-3 bg-primary text-navy font-mono text-sm font-semibold rounded-lg hover:bg-primary-dark transition-colors"
+                >
+                  ← Back to Portfolio
+                </a>
+                <button
+                  onClick={() => setShowGame(false)}
+                  className="px-6 py-3 border border-primary text-primary font-mono text-sm rounded-lg hover:bg-primary/10 transition-colors"
+                >
+                  Hide Game
+                </button>
+              </div>
+            </div>
           )}
         </motion.div>
       </div>
