@@ -77,13 +77,16 @@ function drawApple(ctx, x, y, size) {
   ctx.restore()
 }
 
-// Color for body segment based on position (gradient along the snake)
+// Color for body segment based on position (gradient + alternating stripe)
 function getBodyColor(index, total) {
   // Head-end: bright cyan → Tail-end: deep green
   const t = total > 1 ? index / (total - 1) : 0
-  const r = Math.round(100 - t * 42)
-  const g = Math.round(255 - t * 50)
-  const b = Math.round(218 - t * 60)
+  const isEven = index % 2 === 0
+  // Alternate: even segments slightly brighter, odd segments slightly darker
+  const shift = isEven ? 10 : -10
+  const r = Math.round(Math.min(255, Math.max(0, 100 - t * 42 + shift)))
+  const g = Math.round(Math.min(255, Math.max(0, 255 - t * 50 + shift)))
+  const b = Math.round(Math.min(255, Math.max(0, 218 - t * 60 + shift)))
   return `rgb(${r}, ${g}, ${b})`
 }
 
