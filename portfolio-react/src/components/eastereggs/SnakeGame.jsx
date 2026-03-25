@@ -59,6 +59,10 @@ export default function SnakeGame() {
 
   useEffect(() => {
     const onKey = (e) => {
+      // Don't capture keys when typing in an input field
+      const tag = e.target.tagName.toLowerCase()
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return
+
       const map = {
         ArrowUp: { x: 0, y: -1 },
         ArrowDown: { x: 0, y: 1 },
