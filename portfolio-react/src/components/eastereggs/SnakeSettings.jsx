@@ -20,6 +20,17 @@ const BOARD_PRESETS = [
   { name: 'Charcoal', bg: '#1a1a2e', grid: '#2a2a4e', label: 'charcoal' },
 ]
 
+const FOOD_STYLES = [
+  { name: 'Simple', value: 'simple', desc: 'Red dot', emoji: '🔴' },
+  { name: 'Apple', value: 'apple', desc: 'Classic apple', emoji: '🍎' },
+  { name: 'Cherry', value: 'cherry', desc: 'Double cherry', emoji: '🍒' },
+  { name: 'Orange', value: 'orange', desc: 'Orange fruit', emoji: '🍊' },
+  { name: 'Grape', value: 'grape', desc: 'Grape cluster', emoji: '🍇' },
+  { name: 'Melon', value: 'watermelon', desc: 'Watermelon slice', emoji: '🍉' },
+  { name: 'Lemon', value: 'lemon', desc: 'Lemon', emoji: '🍋' },
+  { name: 'Random', value: 'random', desc: 'Random fruit each time', emoji: '🎲' },
+]
+
 const HEAD_STYLES = [
   { name: 'Simple', value: 'simple', desc: 'Plain square' },
   { name: 'Medium', value: 'medium', desc: 'With eyes' },
@@ -39,6 +50,7 @@ export const DEFAULT_SETTINGS = {
   boardGrid: '#112240',
   headStyle: 'advanced',
   tailStyle: 'advanced',
+  foodStyle: 'apple',
 }
 
 export default function SnakeSettings({ settings, onChange }) {
@@ -113,6 +125,28 @@ export default function SnakeSettings({ settings, onChange }) {
                   style={{ backgroundColor: preset.bg }}
                   title={preset.name}
                 />
+              ))}
+            </div>
+          </div>
+
+          {/* Food Style */}
+          <div>
+            <label className="text-xs font-mono text-slate-300 mb-2 block">Food</label>
+            <div className="flex flex-wrap gap-1.5">
+              {FOOD_STYLES.map((style) => (
+                <button
+                  key={style.value}
+                  onClick={() => update('foodStyle', style.value)}
+                  className={`flex items-center gap-1 px-2 py-1 text-[11px] font-mono rounded border transition-all ${
+                    settings.foodStyle === style.value
+                      ? 'border-primary text-primary bg-primary/10'
+                      : 'border-navy-lighter text-slate-400 hover:border-slate-500'
+                  }`}
+                  title={style.desc}
+                >
+                  <span>{style.emoji}</span>
+                  <span>{style.name}</span>
+                </button>
               ))}
             </div>
           </div>

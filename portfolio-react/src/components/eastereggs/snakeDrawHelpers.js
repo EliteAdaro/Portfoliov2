@@ -36,9 +36,51 @@ export function getBodyColor(index, total, snakeColor, snakeAltColor) {
 }
 
 // =============================================
-// APPLE
+// FOOD — dispatcher based on settings.foodStyle
 // =============================================
-export function drawApple(ctx, x, y, size) {
+export function drawFood(ctx, x, y, size, settings) {
+  const style = settings?.foodStyle || 'apple'
+
+  if (style === 'simple') return drawFoodSimple(ctx, x, y, size)
+  if (style === 'apple') return drawFoodApple(ctx, x, y, size)
+  if (style === 'cherry') return drawFoodCherry(ctx, x, y, size)
+  if (style === 'orange') return drawFoodOrange(ctx, x, y, size)
+  if (style === 'grape') return drawFoodGrape(ctx, x, y, size)
+  if (style === 'watermelon') return drawFoodWatermelon(ctx, x, y, size)
+  if (style === 'lemon') return drawFoodLemon(ctx, x, y, size)
+  if (style === 'random') {
+    // Pick a random fruit per position (deterministic based on x,y so it doesn't flicker)
+    const fruits = ['apple', 'cherry', 'orange', 'grape', 'watermelon', 'lemon']
+    const idx = ((x * 7 + y * 13) & 0xffff) % fruits.length
+    return drawFood(ctx, x, y, size, { foodStyle: fruits[idx] })
+  }
+
+  return drawFoodApple(ctx, x, y, size)
+}
+
+// Simple: just a glowing red circle
+function drawFoodSimple(ctx, x, y, size) {
+  const cx = x + size / 2
+  const cy = y + size / 2
+
+  ctx.save()
+  ctx.shadowColor = '#ff6b6b'
+  ctx.shadowBlur = 10
+  ctx.fillStyle = '#e74c3c'
+  ctx.beginPath()
+  ctx.arc(cx, cy, size / 2 - 3, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.shadowBlur = 0
+  // Highlight
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.3)'
+  ctx.beginPath()
+  ctx.arc(cx - 2, cy - 2, size / 5, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.restore()
+}
+
+// Apple
+function drawFoodApple(ctx, x, y, size) {
   const cx = x + size / 2
   const cy = y + size / 2
   const r = size / 2 - 3
@@ -73,6 +115,261 @@ export function drawApple(ctx, x, y, size) {
   ctx.fillStyle = '#27ae60'
   ctx.beginPath()
   ctx.ellipse(cx + 3, cy - r * 0.9, 3, 1.5, Math.PI / 4, 0, Math.PI * 2)
+  ctx.fill()
+
+  ctx.restore()
+}
+
+// Cherry — two small circles with a stem
+function drawFoodCherry(ctx, x, y, size) {
+  const cx = x + size / 2
+  const cy = y + size / 2
+  const r = size / 2 - 3
+
+  ctx.save()
+  ctx.shadowColor = '#dc2626'
+  ctx.shadowBlur = 8
+
+  // Left cherry
+  ctx.fillStyle = '#dc2626'
+  ctx.beginPath()
+  ctx.arc(cx - r * 0.35, cy + r * 0.2, r * 0.55, 0, Math.PI * 2)
+  ctx.fill()
+
+  // Right cherry
+  ctx.fillStyle = '#b91c1c'
+  ctx.beginPath()
+  ctx.arc(cx + r * 0.35, cy + r * 0.2, r * 0.55, 0, Math.PI * 2)
+  ctx.fill()
+
+  // Highlights
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.3)'
+  ctx.beginPath()
+  ctx.arc(cx - r * 0.45, cy + r * 0.05, r * 0.15, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.beginPath()
+  ctx.arc(cx + r * 0.25, cy + r * 0.05, r * 0.15, 0, Math.PI * 2)
+  ctx.fill()
+
+  ctx.shadowBlur = 0
+
+  // Stems
+  ctx.strokeStyle = '#5d4037'
+  ctx.lineWidth = 1.5
+  ctx.lineCap = 'round'
+  ctx.beginPath()
+  ctx.moveTo(cx - r * 0.35, cy - r * 0.1)
+  ctx.quadraticCurveTo(cx - r * 0.1, cy - r * 1.0, cx + r * 0.1, cy - r * 0.8)
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.moveTo(cx + r * 0.35, cy - r * 0.1)
+  ctx.quadraticCurveTo(cx + r * 0.1, cy - r * 0.9, cx + r * 0.1, cy - r * 0.8)
+  ctx.stroke()
+
+  // Leaf
+  ctx.fillStyle = '#22c55e'
+  ctx.beginPath()
+  ctx.ellipse(cx + r * 0.3, cy - r * 0.8, 3, 1.5, -Math.PI / 6, 0, Math.PI * 2)
+  ctx.fill()
+
+  ctx.restore()
+}
+
+// Orange — round with dimpled texture
+function drawFoodOrange(ctx, x, y, size) {
+  const cx = x + size / 2
+  const cy = y + size / 2
+  const r = size / 2 - 3
+
+  ctx.save()
+  ctx.shadowColor = '#f97316'
+  ctx.shadowBlur = 8
+
+  // Main body
+  ctx.fillStyle = '#f97316'
+  ctx.beginPath()
+  ctx.arc(cx, cy, r, 0, Math.PI * 2)
+  ctx.fill()
+
+  // Darker edge
+  ctx.fillStyle = '#ea580c'
+  ctx.beginPath()
+  ctx.arc(cx + r * 0.15, cy + r * 0.15, r * 0.85, 0, Math.PI * 2)
+  ctx.fill()
+
+  // Fill back with lighter
+  ctx.fillStyle = '#fb923c'
+  ctx.beginPath()
+  ctx.arc(cx - r * 0.1, cy - r * 0.1, r * 0.7, 0, Math.PI * 2)
+  ctx.fill()
+
+  ctx.shadowBlur = 0
+
+  // Highlight
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.3)'
+  ctx.beginPath()
+  ctx.arc(cx - r * 0.3, cy - r * 0.3, r * 0.25, 0, Math.PI * 2)
+  ctx.fill()
+
+  // Navel dot
+  ctx.fillStyle = '#c2410c'
+  ctx.beginPath()
+  ctx.arc(cx, cy - r * 0.65, r * 0.15, 0, Math.PI * 2)
+  ctx.fill()
+
+  // Small leaf
+  ctx.fillStyle = '#22c55e'
+  ctx.beginPath()
+  ctx.ellipse(cx + 2, cy - r * 0.85, 2.5, 1.2, Math.PI / 5, 0, Math.PI * 2)
+  ctx.fill()
+
+  ctx.restore()
+}
+
+// Grape — cluster of small purple circles
+function drawFoodGrape(ctx, x, y, size) {
+  const cx = x + size / 2
+  const cy = y + size / 2
+  const gr = size / 2 - 4
+  const dotR = gr * 0.35
+
+  ctx.save()
+  ctx.shadowColor = '#8b5cf6'
+  ctx.shadowBlur = 6
+
+  const positions = [
+    [-0.3, -0.3], [0.3, -0.3],
+    [-0.5, 0.2], [0, 0.15], [0.5, 0.2],
+    [-0.3, 0.6], [0.3, 0.6],
+  ]
+
+  positions.forEach(([dx, dy], i) => {
+    ctx.fillStyle = i % 2 === 0 ? '#8b5cf6' : '#7c3aed'
+    ctx.beginPath()
+    ctx.arc(cx + dx * gr, cy + dy * gr, dotR, 0, Math.PI * 2)
+    ctx.fill()
+  })
+
+  // Highlights
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.25)'
+  positions.forEach(([dx, dy]) => {
+    ctx.beginPath()
+    ctx.arc(cx + dx * gr - 1, cy + dy * gr - 1, dotR * 0.3, 0, Math.PI * 2)
+    ctx.fill()
+  })
+
+  ctx.shadowBlur = 0
+
+  // Stem
+  ctx.strokeStyle = '#5d4037'
+  ctx.lineWidth = 1.2
+  ctx.beginPath()
+  ctx.moveTo(cx, cy - gr * 0.5)
+  ctx.lineTo(cx, cy - gr * 1.0)
+  ctx.stroke()
+
+  // Leaf
+  ctx.fillStyle = '#22c55e'
+  ctx.beginPath()
+  ctx.ellipse(cx + 2, cy - gr * 0.9, 3, 1.5, Math.PI / 4, 0, Math.PI * 2)
+  ctx.fill()
+
+  ctx.restore()
+}
+
+// Watermelon — half slice
+function drawFoodWatermelon(ctx, x, y, size) {
+  const cx = x + size / 2
+  const cy = y + size / 2
+  const r = size / 2 - 3
+
+  ctx.save()
+  ctx.shadowColor = '#22c55e'
+  ctx.shadowBlur = 6
+
+  // Green rind (full semicircle at bottom)
+  ctx.fillStyle = '#16a34a'
+  ctx.beginPath()
+  ctx.arc(cx, cy, r, 0, Math.PI)
+  ctx.fill()
+
+  // Red flesh (inner semicircle)
+  ctx.fillStyle = '#ef4444'
+  ctx.beginPath()
+  ctx.arc(cx, cy, r * 0.8, 0, Math.PI)
+  ctx.fill()
+
+  // Lighter red center
+  ctx.fillStyle = '#f87171'
+  ctx.beginPath()
+  ctx.arc(cx, cy, r * 0.5, 0, Math.PI)
+  ctx.fill()
+
+  ctx.shadowBlur = 0
+
+  // Seeds
+  ctx.fillStyle = '#1a1a1a'
+  const seeds = [[-0.35, 0.25], [0, 0.35], [0.35, 0.25], [-0.15, 0.15], [0.15, 0.15]]
+  seeds.forEach(([dx, dy]) => {
+    ctx.beginPath()
+    ctx.ellipse(cx + dx * r, cy + dy * r, 1.2, 0.8, Math.PI / 4, 0, Math.PI * 2)
+    ctx.fill()
+  })
+
+  // Flat top edge
+  ctx.strokeStyle = '#15803d'
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.moveTo(cx - r, cy)
+  ctx.lineTo(cx + r, cy)
+  ctx.stroke()
+
+  ctx.restore()
+}
+
+// Lemon — oval yellow shape
+function drawFoodLemon(ctx, x, y, size) {
+  const cx = x + size / 2
+  const cy = y + size / 2
+  const r = size / 2 - 3
+
+  ctx.save()
+  ctx.shadowColor = '#facc15'
+  ctx.shadowBlur = 8
+
+  // Main body (oval)
+  ctx.fillStyle = '#facc15'
+  ctx.beginPath()
+  ctx.ellipse(cx, cy, r * 0.95, r * 0.75, Math.PI / 12, 0, Math.PI * 2)
+  ctx.fill()
+
+  // Darker shade
+  ctx.fillStyle = '#eab308'
+  ctx.beginPath()
+  ctx.ellipse(cx + r * 0.1, cy + r * 0.1, r * 0.7, r * 0.55, Math.PI / 12, 0, Math.PI * 2)
+  ctx.fill()
+
+  // Lighter fill
+  ctx.fillStyle = '#fde047'
+  ctx.beginPath()
+  ctx.ellipse(cx - r * 0.1, cy - r * 0.1, r * 0.55, r * 0.4, Math.PI / 12, 0, Math.PI * 2)
+  ctx.fill()
+
+  ctx.shadowBlur = 0
+
+  // Highlight
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.35)'
+  ctx.beginPath()
+  ctx.arc(cx - r * 0.3, cy - r * 0.2, r * 0.2, 0, Math.PI * 2)
+  ctx.fill()
+
+  // Tip bumps
+  ctx.fillStyle = '#d9a406'
+  ctx.beginPath()
+  ctx.arc(cx - r * 0.85, cy - r * 0.15, r * 0.15, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.beginPath()
+  ctx.arc(cx + r * 0.9, cy + r * 0.1, r * 0.12, 0, Math.PI * 2)
   ctx.fill()
 
   ctx.restore()

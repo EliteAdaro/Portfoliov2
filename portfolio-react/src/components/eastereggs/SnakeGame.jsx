@@ -2,31 +2,16 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Leaderboard from './Leaderboard'
 import ScoreSubmit from './ScoreSubmit'
 import SnakeSettings, { DEFAULT_SETTINGS } from './SnakeSettings'
+import { createGame, getSpeed, tick as engineTick, GRID, CELL } from './snakeEngine'
+import { createKeyHandler, dequeueDirection } from './snakeInput'
 import {
-  drawBoard,
-  drawApple,
-  drawBodySegment,
-  drawHead,
-  drawTail,
+  drawBoard, drawFood, drawBodySegment, drawHead, drawTail,
 } from './snakeDrawHelpers'
-
-const GRID = 20
-const CELL = 20
-const BASE_SPEED = 140
-const MIN_SPEED = 60
-
-// Spawn food on a free cell (not on the snake)
-function spawnFood(snake) {
-  const occupied = new Set(snake.map((s) => `${s.x},${s.y}`))
-  const free = []
-  for (let x = 0; x < GRID; x++) {
-    for (let y = 0; y < GRID; y++) {
-      if (!occupied.has(`${x},${y}`)) free.push({ x, y })
-    }
-  }
-  if (free.length === 0) return { x: 0, y: 0 }
-  return free[Math.floor(Math.random() * free.length)]
-}
+import {
+  createAprilFoolsState, maybeTriggerPrank, onFoodEaten,
+  getSpeedModifier, applyInvertedControls, getShakeOffset,
+  getPrankMessage, drawAprilFoolsExtras,
+} from './snakeAprilFools'
 
 export default function SnakeGame() {
   const canvasRef = useRef(null)
@@ -35,6 +20,7 @@ export default function SnakeGame() {
   const [started, setStarted] = useState(false)
   const [showSubmit, setShowSubmit] = useState(false)
   const [leaderboardKey, setLeaderboardKey] = useState(0)
+  const [prankMsg, setPrankMsg] = useState(null)
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('snake-settings')
@@ -43,44 +29,34 @@ export default function SnakeGame() {
       return { ...DEFAULT_SETTINGS }
     }
   })
+
   const dirRef = useRef({ x: 1, y: 0 })
   const dirQueueRef = useRef([])
   const gameRef = useRef(null)
   const scoreRef = useRef(0)
   const gameOverRef = useRef(false)
   const settingsRef = useRef(settings)
+  const aprilRef = useRef(createAprilFoolsState())
 
-  // Keep settingsRef in sync + persist
+  // Sync settings ref + persist
   useEffect(() => {
     settingsRef.current = settings
     try { localStorage.setItem('snake-settings', JSON.stringify(settings)) } catch {}
   }, [settings])
 
-  const initGame = useCallback(() => {
-    const snake = [
-      { x: 5, y: 10 },
-      { x: 4, y: 10 },
-      { x: 3, y: 10 },
-    ]
-    return { snake, food: spawnFood(snake) }
-  }, [])
-
-  const getSpeed = useCallback(() => {
-    const speedup = Math.floor(scoreRef.current / 50) * 10
-    return Math.max(MIN_SPEED, BASE_SPEED - speedup)
-  }, [])
-
   const restart = useCallback(() => {
     dirRef.current = { x: 1, y: 0 }
     dirQueueRef.current = []
-    gameRef.current = initGame()
+    gameRef.current = createGame()
     scoreRef.current = 0
     gameOverRef.current = false
+    aprilRef.current = createAprilFoolsState()
+    setPrankMsg(null)
     setScore(0)
     setGameOver(false)
     setShowSubmit(false)
     setStarted(true)
-  }, [initGame])
+  }, [])
 
   const handleGameOver = useCallback(() => {
     gameOverRef.current = true
@@ -97,46 +73,23 @@ export default function SnakeGame() {
     setShowSubmit(false)
   }, [])
 
+  // Init game
   useEffect(() => {
-    gameRef.current = initGame()
-  }, [initGame])
+    gameRef.current = createGame()
+  }, [])
 
-  // Keyboard
+  // Keyboard input
   useEffect(() => {
-    const onKey = (e) => {
-      const tag = e.target.tagName.toLowerCase()
-      if (tag === 'input' || tag === 'textarea' || tag === 'select') return
-
-      const map = {
-        ArrowUp: { x: 0, y: -1 },
-        ArrowDown: { x: 0, y: 1 },
-        ArrowLeft: { x: -1, y: 0 },
-        ArrowRight: { x: 1, y: 0 },
-        w: { x: 0, y: -1 }, W: { x: 0, y: -1 },
-        s: { x: 0, y: 1 }, S: { x: 0, y: 1 },
-        a: { x: -1, y: 0 }, A: { x: -1, y: 0 },
-        d: { x: 1, y: 0 }, D: { x: 1, y: 0 },
-      }
-
-      const dir = map[e.key]
-      if (!dir) return
-      e.preventDefault()
-
-      const queue = dirQueueRef.current
-      if (queue.length >= 2) return
-
-      const lastDir = queue.length > 0 ? queue[queue.length - 1] : dirRef.current
-      const isReverse = dir.x + lastDir.x === 0 && dir.y + lastDir.y === 0
-      const isSame = dir.x === lastDir.x && dir.y === lastDir.y
-      if (!isReverse && !isSame) {
-        queue.push(dir)
-      }
-
-      if (!started && !gameOver) setStarted(true)
-    }
-
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    const handler = createKeyHandler(
+      { dirRef, dirQueueRef },
+      {
+        onStart: () => {
+          if (!started && !gameOver) setStarted(true)
+        },
+      },
+    )
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
   }, [started, gameOver])
 
   // Game loop
@@ -146,83 +99,88 @@ export default function SnakeGame() {
     let timeout
     let running = true
 
-    const tick = () => {
+    const gameTick = () => {
       if (!running || gameOverRef.current) return
 
       const game = gameRef.current
       const canvas = canvasRef.current
       if (!game || !canvas) {
-        timeout = setTimeout(tick, 16)
+        timeout = setTimeout(gameTick, 16)
         return
       }
 
-      // Dequeue direction
-      const queue = dirQueueRef.current
-      if (queue.length > 0) {
-        dirRef.current = queue.shift()
-      }
+      const april = aprilRef.current
 
-      const head = { ...game.snake[0] }
-      head.x += dirRef.current.x
-      head.y += dirRef.current.y
+      // Dequeue direction + apply April Fools inversion
+      let direction = dequeueDirection(dirRef, dirQueueRef)
+      direction = applyInvertedControls(april, direction)
 
-      // Wall collision
-      if (head.x < 0 || head.x >= GRID || head.y < 0 || head.y >= GRID) {
+      // Run engine tick
+      const result = engineTick(game, direction)
+
+      if (!result.alive) {
         handleGameOver()
         return
       }
 
-      // Self collision
-      const willEat = head.x === game.food.x && head.y === game.food.y
-      const checkTo = willEat ? game.snake.length : game.snake.length - 1
-      for (let i = 0; i < checkTo; i++) {
-        if (game.snake[i].x === head.x && game.snake[i].y === head.y) {
-          handleGameOver()
-          return
-        }
-      }
-
-      game.snake.unshift(head)
-
-      if (willEat) {
+      if (result.ate) {
         scoreRef.current += 10
         setScore(scoreRef.current)
-        game.food = spawnFood(game.snake)
-      } else {
-        game.snake.pop()
+        onFoodEaten(april)
       }
+
+      // April Fools — maybe trigger a prank
+      maybeTriggerPrank(april, game, scoreRef.current)
+
+      // Update prank message for UI
+      const msg = getPrankMessage(april)
+      setPrankMsg((prev) => prev !== msg ? msg : prev)
 
       // === DRAW ===
       const ctx = canvas.getContext('2d')
       const s = settingsRef.current
 
-      drawBoard(ctx, GRID, CELL, s)
-      drawApple(ctx, game.food.x * CELL, game.food.y * CELL, CELL)
+      // Screen shake
+      const shake = getShakeOffset(april)
+      ctx.save()
+      ctx.translate(shake.x, shake.y)
 
+      drawBoard(ctx, GRID, CELL, s)
+
+      // April Fools extras (fake food)
+      drawAprilFoolsExtras(ctx, april, drawFood, CELL, s)
+
+      // Real food
+      drawFood(ctx, game.food.x * CELL, game.food.y * CELL, CELL, s)
+
+      // Snake
       const { snake } = game
       const len = snake.length
 
-      // Tail
       if (len > 1) {
         drawTail(ctx, snake[len - 1], snake[len - 2], len, CELL, s)
       }
 
-      // Body (back to front)
       for (let i = len - 2; i >= 1; i--) {
         drawBodySegment(ctx, snake[i], snake[i - 1], snake[i + 1], i, len, CELL, s)
       }
 
-      // Head
       drawHead(ctx, snake[0], len > 1 ? snake[1] : null, CELL, s)
 
+      ctx.restore() // undo shake transform
+
+      // Schedule next tick (with April Fools speed modifier)
       if (running && !gameOverRef.current) {
-        timeout = setTimeout(tick, getSpeed())
+        const baseSpeed = getSpeed(scoreRef.current)
+        const modifier = getSpeedModifier(april)
+        timeout = setTimeout(gameTick, Math.round(baseSpeed * modifier))
       }
     }
 
-    timeout = setTimeout(tick, getSpeed())
+    const baseSpeed = getSpeed(scoreRef.current)
+    timeout = setTimeout(gameTick, baseSpeed)
     return () => { running = false; clearTimeout(timeout) }
-  }, [started, gameOver, handleGameOver, getSpeed])
+  }, [started, gameOver, handleGameOver])
 
   return (
     <div className="flex flex-col lg:flex-row items-start justify-center gap-4">
@@ -248,11 +206,25 @@ export default function SnakeGame() {
             className="rounded-lg border border-navy-lighter"
           />
 
+          {/* April Fools prank message */}
+          {prankMsg && (
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 px-3 py-1 bg-red-500/90 text-white text-xs font-mono rounded-full animate-bounce whitespace-nowrap">
+              {prankMsg}
+            </div>
+          )}
+
           {!started && !gameOver && (
             <div className="absolute inset-0 flex items-center justify-center bg-navy/80 rounded-lg">
-              <p className="text-lightest-slate font-mono text-sm text-center">
-                Press arrow keys or WASD to start
-              </p>
+              <div className="text-center">
+                <p className="text-lightest-slate font-mono text-sm">
+                  Press arrow keys or WASD to start
+                </p>
+                {aprilRef.current.active && (
+                  <p className="text-red-400 font-mono text-xs mt-2 animate-pulse">
+                    🎉 April Fools Mode Active! 🎉
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
