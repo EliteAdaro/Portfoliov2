@@ -20,6 +20,7 @@ const COMMANDS = {
   snake: {
     description: 'Play Snake game',
     navigate: '/snake',
+    navState: { startGame: true },
   },
   about: {
     description: 'About Kayne',
@@ -146,7 +147,7 @@ export default function CommandPalette() {
         setInput('')
         setTimeout(() => {
           close()
-          navigate(command.navigate)
+          navigate(command.navigate, { state: command.navState })
         }, 600)
         return
       }

@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import SnakeGame from '../components/eastereggs/SnakeGame'
 
 export default function NotFoundPage() {
-  const [showGame, setShowGame] = useState(false)
+  const location = useLocation()
+  const [showGame, setShowGame] = useState(location.state?.startGame === true)
 
   return (
     <section className="min-h-screen flex items-center justify-center px-4 py-16">
