@@ -24,6 +24,7 @@ export default function SnakeGame() {
   const [leaderboardKey, setLeaderboardKey] = useState(0)
   const [prankMsg, setPrankMsg] = useState(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const settingsBtnRef = useRef(null)
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('snake-settings')
@@ -213,6 +214,7 @@ export default function SnakeGame() {
               </button>
             )}
             <button
+              ref={settingsBtnRef}
               onClick={() => setSettingsOpen((o) => !o)}
               className="p-1.5 text-slate-400 hover:text-primary border border-navy-lighter rounded hover:border-primary/40 transition-colors"
               aria-label="Toggle settings"
@@ -268,6 +270,7 @@ export default function SnakeGame() {
             onChange={setSettings}
             open={settingsOpen}
             onToggle={setSettingsOpen}
+            toggleBtnRef={settingsBtnRef}
           />
 
           {gameOver && (!showSubmit || score === 0) && (

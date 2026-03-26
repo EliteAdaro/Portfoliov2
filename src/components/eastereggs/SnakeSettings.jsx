@@ -55,30 +55,32 @@ export const DEFAULT_SETTINGS = {
   difficulty: DEFAULT_DIFFICULTY,
 }
 
-export default function SnakeSettings({ settings, onChange, open, onToggle }) {
+export default function SnakeSettings({ settings, onChange, open, onToggle, toggleBtnRef }) {
   const panelRef = useRef(null)
 
   const update = (key, value) => {
     onChange({ ...settings, [key]: value })
   }
 
-  // Close when clicking outside
+  // Close when clicking outside (but not when clicking the toggle button itself)
   useEffect(() => {
     if (!open) return
     const handleClick = (e) => {
+      // Ignore clicks on the toggle button — that's handled by SnakeGame
+      if (toggleBtnRef?.current && toggleBtnRef.current.contains(e.target)) return
       if (panelRef.current && !panelRef.current.contains(e.target)) {
         onToggle(false)
       }
     }
-    // Delay to avoid closing immediately on the same click
+    // Small delay to avoid closing on the same click that opened it
     const timer = setTimeout(() => {
       document.addEventListener('mousedown', handleClick)
-    }, 10)
+    }, 50)
     return () => {
       clearTimeout(timer)
       document.removeEventListener('mousedown', handleClick)
     }
-  }, [open, onToggle])
+  }, [open, onToggle, toggleBtnRef])
 
   // Close on Escape
   useEffect(() => {
@@ -90,15 +92,47 @@ export default function SnakeSettings({ settings, onChange, open, onToggle }) {
     return () => document.removeEventListener('keydown', handleKey)
   }, [open, onToggle])
 
+  // Prevent page scroll when settings panel is open
+  useEffect(() => {
+    if (!open) return
+    const panel = panelRef.current
+    if (!panel) return
+
+    // Block wheel events from leaking to the page
+    const handleWheel = (e) => {
+      const { scrollTop, scrollHeight, clientHeight } = panel
+      const atTop = scrollTop === 0 && e.deltaY < 0
+      const atBottom = scrollTop + clientHeight >= scrollHeight - 1 && e.deltaY > 0
+
+      if (atTop || atBottom) {
+        e.preventDefault()
+      }
+    }
+
+    // Block touch scroll leak on mobile
+    const handleTouch = (e) => {
+      if (panel.scrollHeight > panel.clientHeight) {
+        e.stopPropagation()
+      }
+    }
+
+    panel.addEventListener('wheel', handleWheel, { passive: false })
+    panel.addEventListener('touchmove', handleTouch, { passive: false })
+    return () => {
+      panel.removeEventListener('wheel', handleWheel)
+      panel.removeEventListener('touchmove', handleTouch)
+    }
+  }, [open])
+
   if (!open) return null
 
   return (
     <div
       ref={panelRef}
-      className="absolute inset-0 z-30 bg-navy/95 backdrop-blur-sm rounded-lg overflow-y-auto p-4 space-y-4"
+      className="absolute inset-0 z-30 bg-[#0a192f] rounded-lg overflow-y-auto p-4 space-y-4"
     >
       {/* Header */}
-      <div className="flex items-center justify-between sticky top-0 bg-navy/95 pb-2 border-b border-navy-lighter">
+      <div className="flex items-center justify-between sticky -top-4 -mx-4 px-4 pt-4 pb-2 bg-[#0a192f] z-10 border-b border-navy-lighter">
         <span className="text-sm font-mono font-semibold text-primary flex items-center gap-2">
           <Settings size={14} />
           Options
