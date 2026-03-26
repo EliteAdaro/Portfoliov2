@@ -1,116 +1,72 @@
-import { supabase } from './supabase'
+// Client-side highscore service
+// ALL requests go through /api/ server routes — NEVER directly to Supabase
 import { checkName } from './profanityFilter'
 
-// Rate limiting — 1 submit per 30 seconds
-let lastSubmitTime = 0
-const RATE_LIMIT_MS = 30_000
-
-// Max realistic score (20x20 grid minus 3 start segments = 397 food × 10 pts)
-const MAX_SCORE = 3970
-
-// Valid difficulty keys
-const VALID_DIFFICULTIES = ['easy', 'normal', 'hard', 'expert', 'insane']
+const API_BASE = '/api'
 
 /**
- * Get ISO date string for a time period offset from now
- */
-function getPeriodStart(period) {
-  if (period === 'all') return null
-  const now = new Date()
-  if (period === 'daily') now.setHours(0, 0, 0, 0)
-  else if (period === 'weekly') now.setDate(now.getDate() - 7)
-  else if (period === 'monthly') now.setMonth(now.getMonth() - 1)
-  return now.toISOString()
-}
-
-/**
- * Fetch top highscores, optionally filtered by time period and difficulty
+ * Fetch top highscores via server API
  * @param {number} limit
  * @param {'daily'|'weekly'|'monthly'|'all'} period
- * @param {string|null} difficulty - filter by difficulty, null = all
+ * @param {string|null} difficulty
  * @returns {Promise<Array>}
  */
 export async function getHighscores(limit = 10, period = 'all', difficulty = null) {
-  if (!supabase) return []
+  try {
+    const params = new URLSearchParams({ period, limit: String(limit) })
+    if (difficulty) params.set('difficulty', difficulty)
 
-  let query = supabase
-    .from('snake_highscores')
-    .select('id, name, score, difficulty, created_at')
-    .order('score', { ascending: false })
-    .limit(limit)
+    const res = await fetch(`${API_BASE}/highscores?${params}`)
+    if (!res.ok) return []
 
-  const periodStart = getPeriodStart(period)
-  if (periodStart) {
-    query = query.gte('created_at', periodStart)
-  }
-
-  if (difficulty && VALID_DIFFICULTIES.includes(difficulty)) {
-    query = query.eq('difficulty', difficulty)
-  }
-
-  const { data, error } = await query
-
-  if (error) {
-    console.error('Failed to fetch highscores:', error.message)
+    const json = await res.json()
+    return json.scores || []
+  } catch (err) {
+    console.error('Failed to fetch highscores:', err.message)
     return []
   }
-
-  return data || []
 }
 
 /**
- * Submit a new highscore with full validation
- * @param {string} name - Player name
- * @param {number} score - Player score
- * @param {string} difficulty - Difficulty level
+ * Submit a new highscore via server API
+ * @param {string} name
+ * @param {number} score
+ * @param {string} difficulty
+ * @param {number} gameDuration - How long the game lasted in ms
  * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
  */
-export async function submitHighscore(name, score, difficulty = 'normal') {
-  if (!supabase) {
-    return { success: false, error: 'Database not connected' }
-  }
-
-  // Rate limiting
-  const now = Date.now()
-  if (now - lastSubmitTime < RATE_LIMIT_MS) {
-    const waitSec = Math.ceil((RATE_LIMIT_MS - (now - lastSubmitTime)) / 1000)
-    return { success: false, error: `Wait ${waitSec}s before submitting again` }
-  }
-
-  // Validate score
-  if (typeof score !== 'number' || !Number.isInteger(score) || score <= 0) {
-    return { success: false, error: 'Invalid score' }
-  }
-  if (score > MAX_SCORE) {
-    return { success: false, error: 'Score exceeds maximum possible' }
-  }
-  if (score % 10 !== 0) {
-    return { success: false, error: 'Invalid score' }
-  }
-
-  // Validate difficulty
-  if (!VALID_DIFFICULTIES.includes(difficulty)) {
-    difficulty = 'normal'
-  }
-
-  // Re-validate name
+export async function submitHighscore(name, score, difficulty = 'normal', gameDuration = 0) {
+  // Client-side pre-validation (server validates again)
   const nameCheck = checkName(name)
   if (!nameCheck.clean) {
     return { success: false, error: nameCheck.reason }
   }
 
-  lastSubmitTime = now
-
-  const { data, error } = await supabase
-    .from('snake_highscores')
-    .insert([{ name: nameCheck.filtered, score, difficulty }])
-    .select()
-    .single()
-
-  if (error) {
-    console.error('Failed to submit highscore:', error.message)
-    return { success: false, error: error.message }
+  if (typeof score !== 'number' || score <= 0 || score % 10 !== 0) {
+    return { success: false, error: 'Invalid score' }
   }
 
-  return { success: true, data }
+  try {
+    const res = await fetch(`${API_BASE}/submit-score`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: nameCheck.filtered,
+        score,
+        difficulty,
+        gameDuration,
+      }),
+    })
+
+    const json = await res.json()
+
+    if (!res.ok) {
+      return { success: false, error: json.error || 'Failed to submit score' }
+    }
+
+    return { success: true, data: json.data }
+  } catch (err) {
+    console.error('Failed to submit highscore:', err.message)
+    return { success: false, error: 'Network error — try again' }
+  }
 }

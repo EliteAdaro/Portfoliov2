@@ -36,6 +36,7 @@ export default function SnakeGame() {
   const gameRef = useRef(null)
   const scoreRef = useRef(0)
   const gameOverRef = useRef(false)
+  const gameStartRef = useRef(Date.now())
   const settingsRef = useRef(settings)
   const aprilRef = useRef(createAprilFoolsState())
 
@@ -51,6 +52,7 @@ export default function SnakeGame() {
     gameRef.current = createGame()
     scoreRef.current = 0
     gameOverRef.current = false
+    gameStartRef.current = Date.now()
     aprilRef.current = createAprilFoolsState()
     setPrankMsg(null)
     setScore(0)
@@ -243,12 +245,13 @@ export default function SnakeGame() {
             <ScoreSubmit
               score={score}
               difficulty={settings.difficulty}
+              gameDuration={Date.now() - gameStartRef.current}
               onSubmitted={handleScoreSubmitted}
               onSkip={handleSkipSubmit}
             />
           )}
 
-          {gameOver && !showSubmit && (
+          {gameOver && (!showSubmit || score === 0) && (
             <div className="absolute inset-0 flex items-center justify-center bg-navy/80 rounded-lg">
               <div className="text-center">
                 {gameWon ? (
@@ -260,7 +263,9 @@ export default function SnakeGame() {
                 ) : (
                   <>
                     <p className="text-2xl font-bold text-primary mb-2">Game Over!</p>
-                    <p className="text-lightest-slate font-mono text-sm">Score: {score}</p>
+                    <p className="text-lightest-slate font-mono text-sm">
+                      {score === 0 ? 'Better luck next time!' : `Score: ${score}`}
+                    </p>
                   </>
                 )}
               </div>

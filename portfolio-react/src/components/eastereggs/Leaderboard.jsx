@@ -148,7 +148,7 @@ export default function Leaderboard({ refreshKey }) {
               <ul className="space-y-1.5">
                 {scores.map((entry, i) => (
                   <li
-                    key={entry.id}
+                    key={`${entry.name}-${entry.score}-${i}`}
                     className={`flex items-center gap-2 py-1.5 px-2 rounded text-xs font-mono transition-colors ${
                       entry.score >= MAX_SCORE
                         ? 'bg-gradient-to-r from-yellow-400/20 to-amber-500/10 border border-yellow-400/30'
