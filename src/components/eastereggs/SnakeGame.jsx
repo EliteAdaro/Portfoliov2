@@ -258,16 +258,22 @@ export default function SnakeGame() {
                   <>
                     <p className="text-2xl font-bold text-yellow-400 mb-1">🏆 PERFECT GAME! 🏆</p>
                     <p className="text-primary font-mono text-sm mb-1">You filled the entire board!</p>
-                    <p className="text-lightest-slate font-mono text-xs">Max Score: {MAX_SCORE}</p>
+                    <p className="text-lightest-slate font-mono text-xs mb-4">Max Score: {MAX_SCORE}</p>
                   </>
                 ) : (
                   <>
                     <p className="text-2xl font-bold text-primary mb-2">Game Over!</p>
-                    <p className="text-lightest-slate font-mono text-sm">
+                    <p className="text-lightest-slate font-mono text-sm mb-4">
                       {score === 0 ? 'Better luck next time!' : `Score: ${score}`}
                     </p>
                   </>
                 )}
+                <button
+                  onClick={restart}
+                  className="px-6 py-2 bg-primary text-navy font-mono text-sm font-semibold rounded-md hover:bg-primary-dark transition-colors"
+                >
+                  Play Again
+                </button>
               </div>
             </div>
           )}
