@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Settings, ChevronDown, ChevronUp } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Settings, X } from 'lucide-react'
 import { DIFFICULTIES, DEFAULT_DIFFICULTY } from './snakeEngine'
 
 const COLOR_PRESETS = [
@@ -55,180 +55,214 @@ export const DEFAULT_SETTINGS = {
   difficulty: DEFAULT_DIFFICULTY,
 }
 
-export default function SnakeSettings({ settings, onChange }) {
-  const [open, setOpen] = useState(false)
+export default function SnakeSettings({ settings, onChange, open, onToggle }) {
+  const panelRef = useRef(null)
 
   const update = (key, value) => {
     onChange({ ...settings, [key]: value })
   }
 
+  // Close when clicking outside
+  useEffect(() => {
+    if (!open) return
+    const handleClick = (e) => {
+      if (panelRef.current && !panelRef.current.contains(e.target)) {
+        onToggle(false)
+      }
+    }
+    // Delay to avoid closing immediately on the same click
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClick)
+    }, 10)
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('mousedown', handleClick)
+    }
+  }, [open, onToggle])
+
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return
+    const handleKey = (e) => {
+      if (e.key === 'Escape') onToggle(false)
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [open, onToggle])
+
+  if (!open) return null
+
   return (
-    <div className="w-full max-w-[400px]">
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-3 py-1.5 text-xs font-mono text-slate-400 hover:text-primary border border-navy-lighter rounded hover:border-primary/40 transition-colors"
-      >
-        <Settings size={14} />
-        Options
-        {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-      </button>
+    <div
+      ref={panelRef}
+      className="absolute inset-0 z-30 bg-navy/95 backdrop-blur-sm rounded-lg overflow-y-auto p-4 space-y-4"
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between sticky top-0 bg-navy/95 pb-2 border-b border-navy-lighter">
+        <span className="text-sm font-mono font-semibold text-primary flex items-center gap-2">
+          <Settings size={14} />
+          Options
+        </span>
+        <button
+          onClick={() => onToggle(false)}
+          className="p-1 text-slate-400 hover:text-primary rounded transition-colors"
+          aria-label="Close settings"
+        >
+          <X size={16} />
+        </button>
+      </div>
 
-      {open && (
-        <div className="mt-2 p-4 bg-navy-light border border-navy-lighter rounded-lg space-y-4">
-          {/* Difficulty */}
-          <div>
-            <label className="text-xs font-mono text-slate-300 mb-2 block">Difficulty</label>
-            <div className="flex flex-wrap gap-1.5">
-              {Object.values(DIFFICULTIES).map((diff) => (
-                <button
-                  key={diff.key}
-                  onClick={() => update('difficulty', diff.key)}
-                  className={`flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-mono rounded border transition-all ${
-                    settings.difficulty === diff.key
-                      ? 'border-primary text-primary bg-primary/10'
-                      : 'border-navy-lighter text-slate-400 hover:border-slate-500'
-                  }`}
-                  title={diff.desc}
-                >
-                  <span>{diff.icon}</span>
-                  <span>{diff.name}</span>
-                </button>
-              ))}
-            </div>
-            <p className="text-[10px] font-mono text-slate-500 mt-1">
-              {DIFFICULTIES[settings.difficulty]?.desc}
-            </p>
-          </div>
-
-          {/* Snake Color */}
-          <div>
-            <label className="text-xs font-mono text-slate-300 mb-2 block">Snake Color</label>
-            <div className="flex flex-wrap gap-2">
-              {COLOR_PRESETS.map((preset) => (
-                <button
-                  key={preset.label}
-                  onClick={() => onChange({ ...settings, snakeColor: preset.snake, snakeAltColor: preset.snakeAlt })}
-                  className={`w-7 h-7 rounded-full border-2 transition-all ${
-                    settings.snakeColor === preset.snake
-                      ? 'border-white scale-110'
-                      : 'border-transparent hover:border-white/40'
-                  }`}
-                  style={{ backgroundColor: preset.snake }}
-                  title={preset.name}
-                />
-              ))}
-            </div>
-            {/* Custom color picker */}
-            <div className="flex items-center gap-2 mt-2">
-              <label className="text-[10px] font-mono text-slate-500">Custom:</label>
-              <input
-                type="color"
-                value={settings.snakeColor}
-                onChange={(e) => {
-                  const hex = e.target.value
-                  const r = Math.max(0, parseInt(hex.slice(1, 3), 16) - 20)
-                  const g = Math.max(0, parseInt(hex.slice(3, 5), 16) - 20)
-                  const b = Math.max(0, parseInt(hex.slice(5, 7), 16) - 20)
-                  onChange({ ...settings, snakeColor: hex, snakeAltColor: `rgb(${r},${g},${b})` })
-                }}
-                className="w-6 h-6 rounded cursor-pointer border-0 bg-transparent"
-              />
-            </div>
-          </div>
-
-          {/* Board Color */}
-          <div>
-            <label className="text-xs font-mono text-slate-300 mb-2 block">Board</label>
-            <div className="flex flex-wrap gap-2">
-              {BOARD_PRESETS.map((preset) => (
-                <button
-                  key={preset.label}
-                  onClick={() => onChange({ ...settings, boardBg: preset.bg, boardGrid: preset.grid })}
-                  className={`w-7 h-7 rounded border-2 transition-all ${
-                    settings.boardBg === preset.bg
-                      ? 'border-white scale-110'
-                      : 'border-transparent hover:border-white/40'
-                  }`}
-                  style={{ backgroundColor: preset.bg }}
-                  title={preset.name}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Food Style */}
-          <div>
-            <label className="text-xs font-mono text-slate-300 mb-2 block">Food</label>
-            <div className="flex flex-wrap gap-1.5">
-              {FOOD_STYLES.map((style) => (
-                <button
-                  key={style.value}
-                  onClick={() => update('foodStyle', style.value)}
-                  className={`flex items-center gap-1 px-2 py-1 text-[11px] font-mono rounded border transition-all ${
-                    settings.foodStyle === style.value
-                      ? 'border-primary text-primary bg-primary/10'
-                      : 'border-navy-lighter text-slate-400 hover:border-slate-500'
-                  }`}
-                  title={style.desc}
-                >
-                  <span>{style.emoji}</span>
-                  <span>{style.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Head Style */}
-          <div>
-            <label className="text-xs font-mono text-slate-300 mb-2 block">Head Style</label>
-            <div className="flex gap-2">
-              {HEAD_STYLES.map((style) => (
-                <button
-                  key={style.value}
-                  onClick={() => update('headStyle', style.value)}
-                  className={`px-2.5 py-1 text-[11px] font-mono rounded border transition-all ${
-                    settings.headStyle === style.value
-                      ? 'border-primary text-primary bg-primary/10'
-                      : 'border-navy-lighter text-slate-400 hover:border-slate-500'
-                  }`}
-                  title={style.desc}
-                >
-                  {style.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Tail Style */}
-          <div>
-            <label className="text-xs font-mono text-slate-300 mb-2 block">Tail Style</label>
-            <div className="flex gap-2">
-              {TAIL_STYLES.map((style) => (
-                <button
-                  key={style.value}
-                  onClick={() => update('tailStyle', style.value)}
-                  className={`px-2.5 py-1 text-[11px] font-mono rounded border transition-all ${
-                    settings.tailStyle === style.value
-                      ? 'border-primary text-primary bg-primary/10'
-                      : 'border-navy-lighter text-slate-400 hover:border-slate-500'
-                  }`}
-                  title={style.desc}
-                >
-                  {style.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Reset */}
-          <button
-            onClick={() => onChange({ ...DEFAULT_SETTINGS })}
-            className="text-[10px] font-mono text-slate-500 hover:text-slate-300 transition-colors underline"
-          >
-            Reset to defaults
-          </button>
+      {/* Difficulty */}
+      <div>
+        <label className="text-xs font-mono text-slate-300 mb-2 block">Difficulty</label>
+        <div className="flex flex-wrap gap-1.5">
+          {Object.values(DIFFICULTIES).map((diff) => (
+            <button
+              key={diff.key}
+              onClick={() => update('difficulty', diff.key)}
+              className={`flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-mono rounded border transition-all ${
+                settings.difficulty === diff.key
+                  ? 'border-primary text-primary bg-primary/10'
+                  : 'border-navy-lighter text-slate-400 hover:border-slate-500'
+              }`}
+              title={diff.desc}
+            >
+              <span>{diff.icon}</span>
+              <span>{diff.name}</span>
+            </button>
+          ))}
         </div>
-      )}
+        <p className="text-[10px] font-mono text-slate-500 mt-1">
+          {DIFFICULTIES[settings.difficulty]?.desc}
+        </p>
+      </div>
+
+      {/* Snake Color */}
+      <div>
+        <label className="text-xs font-mono text-slate-300 mb-2 block">Snake Color</label>
+        <div className="flex flex-wrap gap-2">
+          {COLOR_PRESETS.map((preset) => (
+            <button
+              key={preset.label}
+              onClick={() => onChange({ ...settings, snakeColor: preset.snake, snakeAltColor: preset.snakeAlt })}
+              className={`w-7 h-7 rounded-full border-2 transition-all ${
+                settings.snakeColor === preset.snake
+                  ? 'border-white scale-110'
+                  : 'border-transparent hover:border-white/40'
+              }`}
+              style={{ backgroundColor: preset.snake }}
+              title={preset.name}
+            />
+          ))}
+        </div>
+        <div className="flex items-center gap-2 mt-2">
+          <label className="text-[10px] font-mono text-slate-500">Custom:</label>
+          <input
+            type="color"
+            value={settings.snakeColor}
+            onChange={(e) => {
+              const hex = e.target.value
+              const r = Math.max(0, parseInt(hex.slice(1, 3), 16) - 20)
+              const g = Math.max(0, parseInt(hex.slice(3, 5), 16) - 20)
+              const b = Math.max(0, parseInt(hex.slice(5, 7), 16) - 20)
+              onChange({ ...settings, snakeColor: hex, snakeAltColor: `rgb(${r},${g},${b})` })
+            }}
+            className="w-6 h-6 rounded cursor-pointer border-0 bg-transparent"
+          />
+        </div>
+      </div>
+
+      {/* Board Color */}
+      <div>
+        <label className="text-xs font-mono text-slate-300 mb-2 block">Board</label>
+        <div className="flex flex-wrap gap-2">
+          {BOARD_PRESETS.map((preset) => (
+            <button
+              key={preset.label}
+              onClick={() => onChange({ ...settings, boardBg: preset.bg, boardGrid: preset.grid })}
+              className={`w-7 h-7 rounded border-2 transition-all ${
+                settings.boardBg === preset.bg
+                  ? 'border-white scale-110'
+                  : 'border-transparent hover:border-white/40'
+              }`}
+              style={{ backgroundColor: preset.bg }}
+              title={preset.name}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Food Style */}
+      <div>
+        <label className="text-xs font-mono text-slate-300 mb-2 block">Food</label>
+        <div className="flex flex-wrap gap-1.5">
+          {FOOD_STYLES.map((style) => (
+            <button
+              key={style.value}
+              onClick={() => update('foodStyle', style.value)}
+              className={`flex items-center gap-1 px-2 py-1 text-[11px] font-mono rounded border transition-all ${
+                settings.foodStyle === style.value
+                  ? 'border-primary text-primary bg-primary/10'
+                  : 'border-navy-lighter text-slate-400 hover:border-slate-500'
+              }`}
+              title={style.desc}
+            >
+              <span>{style.emoji}</span>
+              <span>{style.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Head Style */}
+      <div>
+        <label className="text-xs font-mono text-slate-300 mb-2 block">Head Style</label>
+        <div className="flex gap-2">
+          {HEAD_STYLES.map((style) => (
+            <button
+              key={style.value}
+              onClick={() => update('headStyle', style.value)}
+              className={`px-2.5 py-1 text-[11px] font-mono rounded border transition-all ${
+                settings.headStyle === style.value
+                  ? 'border-primary text-primary bg-primary/10'
+                  : 'border-navy-lighter text-slate-400 hover:border-slate-500'
+              }`}
+              title={style.desc}
+            >
+              {style.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tail Style */}
+      <div>
+        <label className="text-xs font-mono text-slate-300 mb-2 block">Tail Style</label>
+        <div className="flex gap-2">
+          {TAIL_STYLES.map((style) => (
+            <button
+              key={style.value}
+              onClick={() => update('tailStyle', style.value)}
+              className={`px-2.5 py-1 text-[11px] font-mono rounded border transition-all ${
+                settings.tailStyle === style.value
+                  ? 'border-primary text-primary bg-primary/10'
+                  : 'border-navy-lighter text-slate-400 hover:border-slate-500'
+              }`}
+              title={style.desc}
+            >
+              {style.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Reset */}
+      <button
+        onClick={() => onChange({ ...DEFAULT_SETTINGS })}
+        className="text-[10px] font-mono text-slate-500 hover:text-slate-300 transition-colors underline"
+      >
+        Reset to defaults
+      </button>
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const COMMANDS = {
@@ -11,9 +12,14 @@ const COMMANDS = {
   contact    — Get in touch
   resume     — Download CV
   theme      — Toggle dark/light mode
+  snake      — 🐍 Play Snake!
   clear      — Clear terminal
   sudo hire kayne — ???
   exit       — Close terminal`,
+  },
+  snake: {
+    description: 'Play Snake game',
+    navigate: '/snake',
   },
   about: {
     description: 'About Kayne',
@@ -75,6 +81,7 @@ const COMMANDS = {
 }
 
 export default function CommandPalette() {
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [input, setInput] = useState('')
   const [history, setHistory] = useState([
@@ -133,6 +140,16 @@ export default function CommandPalette() {
 
     const command = COMMANDS[cmd]
     if (command) {
+      if (command.navigate) {
+        newHistory.push({ type: 'output', text: '🐍 Loading Snake game...' })
+        setHistory(newHistory)
+        setInput('')
+        setTimeout(() => {
+          close()
+          navigate(command.navigate)
+        }, 600)
+        return
+      }
       const output = command.output || command.action?.()
       if (output) {
         newHistory.push({ type: 'output', text: output })

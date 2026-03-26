@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Leaderboard from './Leaderboard'
 import ScoreSubmit from './ScoreSubmit'
 import SnakeSettings, { DEFAULT_SETTINGS } from './SnakeSettings'
+import { Settings } from 'lucide-react'
 import { createGame, getSpeed, tick as engineTick, GRID, CELL, MAX_SCORE } from './snakeEngine'
 import { createKeyHandler, dequeueDirection } from './snakeInput'
 import {
@@ -22,6 +23,7 @@ export default function SnakeGame() {
   const [gameWon, setGameWon] = useState(false)
   const [leaderboardKey, setLeaderboardKey] = useState(0)
   const [prankMsg, setPrankMsg] = useState(null)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('snake-settings')
@@ -201,14 +203,23 @@ export default function SnakeGame() {
       <div className="flex flex-col items-center gap-4">
         <div className="flex items-center justify-between w-full max-w-[400px]">
           <span className="font-mono text-primary text-sm">Score: {score}</span>
-          {gameOver && !showSubmit && (
+          <div className="flex items-center gap-2">
+            {gameOver && !showSubmit && (
+              <button
+                onClick={restart}
+                className="px-4 py-1 border border-primary text-primary font-mono text-sm rounded hover:bg-primary/10 transition-colors"
+              >
+                Play Again
+              </button>
+            )}
             <button
-              onClick={restart}
-              className="px-4 py-1 border border-primary text-primary font-mono text-sm rounded hover:bg-primary/10 transition-colors"
+              onClick={() => setSettingsOpen((o) => !o)}
+              className="p-1.5 text-slate-400 hover:text-primary border border-navy-lighter rounded hover:border-primary/40 transition-colors"
+              aria-label="Toggle settings"
             >
-              Play Again
+              <Settings size={14} />
             </button>
-          )}
+          </div>
         </div>
 
         <div className="relative">
@@ -251,6 +262,14 @@ export default function SnakeGame() {
             />
           )}
 
+          {/* Settings overlay */}
+          <SnakeSettings
+            settings={settings}
+            onChange={setSettings}
+            open={settingsOpen}
+            onToggle={setSettingsOpen}
+          />
+
           {gameOver && (!showSubmit || score === 0) && (
             <div className="absolute inset-0 flex items-center justify-center bg-navy/80 rounded-lg">
               <div className="text-center">
@@ -279,8 +298,6 @@ export default function SnakeGame() {
           )}
         </div>
 
-        {/* Settings below the game */}
-        <SnakeSettings settings={settings} onChange={setSettings} />
       </div>
 
       {/* Leaderboard */}
