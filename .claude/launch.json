@@ -5,8 +5,7 @@
       "name": "portfolio-dev",
       "runtimeExecutable": "node",
       "runtimeArgs": ["node_modules/vite/bin/vite.js", "--host", "--port", "3456"],
-      "port": 3456,
-      "cwd": "portfolio-react"
+      "port": 3456
     }
   ]
 }

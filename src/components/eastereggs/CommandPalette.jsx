@@ -86,7 +86,12 @@ export default function CommandPalette() {
   const [open, setOpen] = useState(false)
   const [input, setInput] = useState('')
   const [history, setHistory] = useState([
-    { type: 'system', text: 'Welcome to KayneOS v2.0 — Type "help" for commands' },
+    { type: 'ascii', text: `  _  __                       _   _
+ | |/ /__ _ _  _ _ _  ___   | \\ | |
+ | ' </ _\` | || | ' \\/ -_)  |  \\| |
+ |_|\\_\\__,_|\\_, |_||_\\___|  |_|\\__|
+            |__/` },
+    { type: 'system', text: '⚡ Terminal ready — Type "help" for available commands' },
   ])
   const inputRef = useRef(null)
   const scrollRef = useRef(null)
@@ -209,6 +214,8 @@ export default function CommandPalette() {
                       ? 'text-[#64ffda]'
                       : entry.type === 'error'
                       ? 'text-red-400'
+                      : entry.type === 'ascii'
+                      ? 'text-[#64ffda] whitespace-pre font-bold text-xs leading-tight'
                       : entry.type === 'system'
                       ? 'text-[#8892b0]'
                       : 'text-[#ccd6f6] whitespace-pre-wrap'
