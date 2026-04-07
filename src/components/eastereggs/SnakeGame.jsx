@@ -42,6 +42,7 @@ export default function SnakeGame() {
   const gameStartRef = useRef(Date.now())
   const settingsRef = useRef(settings)
   const aprilRef = useRef(createAprilFoolsState())
+  const foodSpawnRef = useRef({ x: -1, y: -1, time: 0 })
 
   // Sync settings ref + persist
   useEffect(() => {
@@ -166,8 +167,18 @@ export default function SnakeGame() {
       // April Fools extras (fake food)
       drawAprilFoolsExtras(ctx, april, drawFood, CELL, s)
 
-      // Real food
+      // Real food (with quick fade-in on spawn)
+      const spawn = foodSpawnRef.current
+      if (spawn.x !== game.food.x || spawn.y !== game.food.y) {
+        foodSpawnRef.current = { x: game.food.x, y: game.food.y, time: performance.now() }
+      }
+      const FADE_MS = 140
+      const elapsed = performance.now() - foodSpawnRef.current.time
+      const alpha = Math.min(1, elapsed / FADE_MS)
+      ctx.save()
+      ctx.globalAlpha = alpha
       drawFood(ctx, game.food.x * CELL, game.food.y * CELL, CELL, s)
+      ctx.restore()
 
       // Snake
       const { snake } = game
