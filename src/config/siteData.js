@@ -31,14 +31,18 @@ export const navLinks = [
 ]
 
 export const skills = [
-  { name: 'HTML', level: 80, icon: 'html' },
-  { name: 'CSS', level: 70, icon: 'css' },
-  { name: 'JavaScript', level: 60, icon: 'js' },
-  { name: 'React', level: 45, icon: 'react' },
-  { name: 'Bootstrap', level: 50, icon: 'bootstrap' },
-  { name: 'Tailwind CSS', level: 55, icon: 'tailwind' },
-  { name: 'C#', level: 40, icon: 'csharp' },
-  { name: 'Arduino', level: 15, icon: 'arduino' },
+  {
+    category: 'Frontend',
+    items: ['HTML', 'CSS', 'JavaScript', 'React', 'Tailwind CSS', 'Bootstrap'],
+  },
+  {
+    category: 'Languages',
+    items: ['JavaScript', 'C#', 'PHP'],
+  },
+  {
+    category: 'Tools & Other',
+    items: ['Git', 'VS Code', 'Figma', 'Arduino'],
+  },
 ]
 
 export const certificates = [

@@ -3,29 +3,26 @@ import { skills, certificates } from '../../config/siteData'
 import SectionHeading from '../ui/SectionHeading'
 import AnimatedReveal from '../ui/AnimatedReveal'
 
-function SkillBar({ skill, index }) {
+function SkillGroup({ group, index }) {
   return (
     <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      whileInView={{ opacity: 1, x: 0 }}
+      initial={{ opacity: 0, y: 15 }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="group"
     >
-      <div className="flex justify-between items-center mb-2">
-        <span className="text-sm font-semibold text-slate-700 dark:text-light-slate group-hover:text-primary transition-colors">
-          {skill.name}
-        </span>
-        <span className="text-xs font-mono text-primary">{skill.level}%</span>
-      </div>
-      <div className="h-2 bg-slate-200 dark:bg-navy-lighter rounded-full overflow-hidden">
-        <motion.div
-          initial={{ width: 0 }}
-          whileInView={{ width: `${skill.level}%` }}
-          viewport={{ once: true }}
-          transition={{ duration: 1, delay: 0.3 + index * 0.1, ease: 'easeOut' }}
-          className="h-full rounded-full bg-gradient-to-r from-primary/80 to-primary"
-        />
+      <h4 className="font-mono text-primary text-xs mb-3 uppercase tracking-wider">
+        {group.category}
+      </h4>
+      <div className="flex flex-wrap gap-2">
+        {group.items.map((item) => (
+          <span
+            key={item}
+            className="px-3 py-1.5 text-xs font-mono rounded-md bg-slate-100 dark:bg-navy-light border border-slate-200 dark:border-navy-lighter text-slate-700 dark:text-light-slate hover:border-primary hover:text-primary transition-colors"
+          >
+            {item}
+          </span>
+        ))}
       </div>
     </motion.div>
   )
@@ -44,9 +41,9 @@ export default function Skills() {
                 Technical Skills
               </h3>
             </AnimatedReveal>
-            <div className="space-y-5">
-              {skills.map((skill, i) => (
-                <SkillBar key={skill.name} skill={skill} index={i} />
+            <div className="space-y-6">
+              {skills.map((group, i) => (
+                <SkillGroup key={group.category} group={group} index={i} />
               ))}
             </div>
           </div>
