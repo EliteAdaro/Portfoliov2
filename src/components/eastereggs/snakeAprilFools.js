@@ -1,64 +1,78 @@
 // =============================================
-// Snake April Fools Pranks — active on April 1st
+// Snake Chaos Mode
 // =============================================
-// Each prank is a modifier that hooks into the game loop.
-// Pranks are randomly selected and applied per tick or event.
+// Picks N random "chaos features" at game start. Only those features can
+// trigger during the game. New game = new random selection.
+//
+// (This file kept its old name `snakeAprilFools` for import stability.)
 
-import { spawnFood, GRID, CELL } from './snakeEngine'
+import { spawnFood } from './snakeEngine'
 
 /**
- * Check if today is April 1st
+ * Check if today is April 1st (used to default Chaos Mode on).
  */
 export function isAprilFools() {
   const now = new Date()
-  return now.getMonth() === 3 && now.getDate() === 1 // month is 0-indexed
+  return now.getMonth() === 3 && now.getDate() === 1
 }
 
 /**
- * Create April Fools state tracker
+ * All available chaos features.
  */
-export function createAprilFoolsState() {
-  return {
-    active: isAprilFools(),
-    foodDodgeCount: 0,       // how many times food has dodged
-    invertedUntil: 0,        // timestamp when inverted controls end
-    speedPrankUntil: 0,      // timestamp when speed prank ends
-    mirrorUntil: 0,          // timestamp when mirror drawing ends
-    shakeUntil: 0,           // timestamp when screen shake ends
-    fakeFoodPos: null,        // ghost food position (decoy)
-    prankCooldown: 0,        // ticks until next prank can trigger
-    totalPranks: 0,          // pranks triggered this session
-    messageUntil: 0,         // timestamp when message disappears
-    message: '',             // current prank message
-  }
-}
-
-/**
- * List of available pranks with their weights (higher = more likely)
- */
-const PRANKS = [
-  { id: 'foodDodge', weight: 25, name: 'Food Dodge' },
-  { id: 'speedBurst', weight: 20, name: 'Speed Burst' },
-  { id: 'speedSlow', weight: 15, name: 'Slow Motion' },
-  { id: 'invertControls', weight: 12, name: 'Inverted Controls' },
-  { id: 'screenShake', weight: 15, name: 'Screen Shake' },
-  { id: 'fakeFood', weight: 13, name: 'Fake Food' },
+export const CHAOS_FEATURES = [
+  { id: 'foodDodge',      name: 'Food Dodge',        emoji: '🏃' },
+  { id: 'speedBurst',     name: 'Speed Burst',       emoji: '🚀' },
+  { id: 'speedSlow',      name: 'Slow Motion',       emoji: '🐌' },
+  { id: 'invertControls', name: 'Inverted Controls', emoji: '🔄' },
+  { id: 'screenShake',    name: 'Screen Shake',      emoji: '🌋' },
+  { id: 'fakeFood',       name: 'Fake Food',         emoji: '🎭' },
 ]
 
+const FEATURE_IDS = CHAOS_FEATURES.map((f) => f.id)
+
 /**
- * Pick a random prank based on weights
+ * Pick `count` unique random features from the pool.
+ * count >= pool size → all features.
  */
-function pickRandomPrank() {
-  const totalWeight = PRANKS.reduce((sum, p) => sum + p.weight, 0)
-  let roll = Math.random() * totalWeight
-  for (const prank of PRANKS) {
-    roll -= prank.weight
-    if (roll <= 0) return prank
+function pickFeatures(count) {
+  const pool = [...FEATURE_IDS]
+  if (count >= pool.length) return pool
+  const picked = []
+  for (let i = 0; i < count; i++) {
+    const idx = Math.floor(Math.random() * pool.length)
+    picked.push(pool.splice(idx, 1)[0])
   }
-  return PRANKS[0]
+  return picked
 }
 
-// Prank messages
+/**
+ * Create chaos state. If chaosCount is 0/falsy, chaos is inactive.
+ */
+export function createChaosState(chaosCount = 0) {
+  const active = chaosCount > 0
+  const enabled = active ? pickFeatures(chaosCount) : []
+  return {
+    active,
+    enabled,                  // Set of enabled feature ids for this game
+    enabledSet: new Set(enabled),
+    foodDodgeCount: 0,
+    invertedUntil: 0,
+    speedPrankUntil: 0,
+    speedMultiplier: 1,
+    shakeUntil: 0,
+    fakeFoodPos: null,
+    prankCooldown: 0,
+    totalPranks: 0,
+    messageUntil: 0,
+    message: '',
+  }
+}
+
+// Backwards-compat: old name still exported, returns inactive state by default.
+export function createAprilFoolsState() {
+  return createChaosState(0)
+}
+
 const MESSAGES = {
   foodDodge: ['Oops! The food ran away! 🏃', 'Catch me if you can! 🍎💨', 'Not so fast! 😏'],
   speedBurst: ['TURBO MODE! 🚀', 'Gotta go fast! ⚡', 'Speed boost! 💨'],
@@ -68,153 +82,106 @@ const MESSAGES = {
   fakeFood: ['Which one is real? 👀', 'Double trouble! 🎭', 'Trust your instincts! 🤔'],
 }
 
-function getRandomMessage(prankId) {
-  const msgs = MESSAGES[prankId] || ['April Fools! 🎉']
+function getRandomMessage(id) {
+  const msgs = MESSAGES[id] || ['Chaos! 🎉']
   return msgs[Math.floor(Math.random() * msgs.length)]
 }
 
-/**
- * Maybe trigger a prank. Called each tick.
- * Returns modified aprilState.
- * @param {object} aprilState
- * @param {object} game - { snake, food }
- * @param {number} score
- * @returns {object} updated aprilState
- */
-export function maybeTriggerPrank(aprilState, game, score) {
-  if (!aprilState.active) return aprilState
+function pickEnabledFeature(state) {
+  if (state.enabled.length === 0) return null
+  return state.enabled[Math.floor(Math.random() * state.enabled.length)]
+}
 
-  // Decrease cooldown
-  if (aprilState.prankCooldown > 0) {
-    aprilState.prankCooldown--
-    return aprilState
+/**
+ * Maybe trigger a chaos feature. Called each tick.
+ */
+export function maybeTriggerPrank(state, game, score) {
+  if (!state.active || state.enabled.length === 0) return state
+
+  if (state.prankCooldown > 0) {
+    state.prankCooldown--
+    return state
   }
 
-  // 3% chance per tick to trigger a prank (roughly every 2-4 seconds)
-  if (Math.random() > 0.03) return aprilState
+  if (Math.random() > 0.03) return state
+  if (score < 20) return state
 
-  // Don't prank too early (let player get started)
-  if (score < 20) return aprilState
+  const id = pickEnabledFeature(state)
+  if (!id) return state
 
-  const prank = pickRandomPrank()
   const now = Date.now()
+  state.prankCooldown = 40
+  state.totalPranks++
+  state.message = getRandomMessage(id)
+  state.messageUntil = now + 2000
 
-  aprilState.prankCooldown = 40 // ~5 seconds between pranks
-  aprilState.totalPranks++
-  aprilState.message = getRandomMessage(prank.id)
-  aprilState.messageUntil = now + 2000
-
-  switch (prank.id) {
+  switch (id) {
     case 'foodDodge':
-      // Food teleports away (but only first time per food)
-      if (aprilState.foodDodgeCount === 0) {
+      if (state.foodDodgeCount === 0) {
         game.food = spawnFood(game.snake)
-        aprilState.foodDodgeCount = 1
+        state.foodDodgeCount = 1
       }
       break
-
     case 'speedBurst':
-      // Temporarily speed up (2.5 seconds)
-      aprilState.speedPrankUntil = now + 2500
-      aprilState.speedMultiplier = 0.5 // half the delay = double speed
+      state.speedPrankUntil = now + 2500
+      state.speedMultiplier = 0.5
       break
-
     case 'speedSlow':
-      // Temporarily slow down (3 seconds)
-      aprilState.speedPrankUntil = now + 3000
-      aprilState.speedMultiplier = 2.5 // 2.5x delay = very slow
+      state.speedPrankUntil = now + 3000
+      state.speedMultiplier = 2.5
       break
-
     case 'invertControls':
-      // Invert controls for 3 seconds
-      aprilState.invertedUntil = now + 3000
+      state.invertedUntil = now + 3000
       break
-
     case 'screenShake':
-      // Shake the canvas for 1.5 seconds
-      aprilState.shakeUntil = now + 1500
+      state.shakeUntil = now + 1500
       break
-
     case 'fakeFood':
-      // Show a decoy food
-      aprilState.fakeFoodPos = spawnFood([...game.snake, game.food])
-      setTimeout(() => { aprilState.fakeFoodPos = null }, 4000)
+      state.fakeFoodPos = spawnFood([...game.snake, game.food])
+      setTimeout(() => { state.fakeFoodPos = null }, 4000)
       break
   }
 
-  return aprilState
+  return state
 }
 
-/**
- * Handle food eaten — reset dodge counter
- */
-export function onFoodEaten(aprilState) {
-  aprilState.foodDodgeCount = 0
-  return aprilState
+export function onFoodEaten(state) {
+  state.foodDodgeCount = 0
+  return state
 }
 
-/**
- * Get speed modifier (returns multiplier for tick delay)
- */
-export function getSpeedModifier(aprilState) {
-  if (!aprilState.active) return 1
-  if (Date.now() < aprilState.speedPrankUntil) {
-    return aprilState.speedMultiplier || 1
-  }
+export function getSpeedModifier(state) {
+  if (!state.active) return 1
+  if (Date.now() < state.speedPrankUntil) return state.speedMultiplier || 1
   return 1
 }
 
-/**
- * Apply inverted controls to a direction
- */
-export function applyInvertedControls(aprilState, direction) {
-  if (!aprilState.active) return direction
-  if (Date.now() < aprilState.invertedUntil) {
-    return { x: -direction.x, y: -direction.y }
-  }
+export function applyInvertedControls(state, direction) {
+  if (!state.active) return direction
+  if (Date.now() < state.invertedUntil) return { x: -direction.x, y: -direction.y }
   return direction
 }
 
-/**
- * Get canvas transform offset for screen shake
- */
-export function getShakeOffset(aprilState) {
-  if (!aprilState.active) return { x: 0, y: 0 }
-  if (Date.now() < aprilState.shakeUntil) {
-    return {
-      x: (Math.random() - 0.5) * 8,
-      y: (Math.random() - 0.5) * 8,
-    }
+export function getShakeOffset(state) {
+  if (!state.active) return { x: 0, y: 0 }
+  if (Date.now() < state.shakeUntil) {
+    return { x: (Math.random() - 0.5) * 8, y: (Math.random() - 0.5) * 8 }
   }
   return { x: 0, y: 0 }
 }
 
-/**
- * Get current prank message (or null if expired)
- */
-export function getPrankMessage(aprilState) {
-  if (!aprilState.active) return null
-  if (Date.now() < aprilState.messageUntil) return aprilState.message
+export function getPrankMessage(state) {
+  if (!state.active) return null
+  if (Date.now() < state.messageUntil) return state.message
   return null
 }
 
-/**
- * Draw April Fools extras on canvas (fake food, message)
- */
-export function drawAprilFoolsExtras(ctx, aprilState, drawFoodFn, cellSize, settings) {
-  if (!aprilState.active) return
-
-  // Draw fake food (slightly transparent)
-  if (aprilState.fakeFoodPos) {
+export function drawAprilFoolsExtras(ctx, state, drawFoodFn, cellSize, settings) {
+  if (!state.active) return
+  if (state.fakeFoodPos) {
     ctx.save()
     ctx.globalAlpha = 0.7
-    drawFoodFn(
-      ctx,
-      aprilState.fakeFoodPos.x * cellSize,
-      aprilState.fakeFoodPos.y * cellSize,
-      cellSize,
-      settings,
-    )
+    drawFoodFn(ctx, state.fakeFoodPos.x * cellSize, state.fakeFoodPos.y * cellSize, cellSize, settings)
     ctx.globalAlpha = 1.0
     ctx.restore()
   }

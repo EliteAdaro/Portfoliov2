@@ -75,7 +75,11 @@ export default async function handler(req, res) {
       return res.status(429).json({ error: `Too fast! Wait ${rl.waitSec}s before submitting again` })
     }
 
-    const { name, score, difficulty, gameDuration } = req.body || {}
+    const { name, score, difficulty, gameDuration, chaosCount } = req.body || {}
+
+    // === VALIDATE CHAOS COUNT ===
+    const VALID_CHAOS = [0, 1, 2, 3, 6]
+    const safeChaosCount = VALID_CHAOS.includes(chaosCount) ? chaosCount : 0
 
     // === VALIDATE NAME ===
     const nameCheck = checkNameServer(name)
@@ -125,9 +129,10 @@ export default async function handler(req, res) {
         name: nameCheck.filtered,
         score,
         difficulty: safeDifficulty,
+        chaos_count: safeChaosCount,
         ip_hash: hashIP(ip),
       }])
-      .select('name, score, difficulty, created_at')
+      .select('name, score, difficulty, chaos_count, created_at')
       .single()
 
     if (error) {

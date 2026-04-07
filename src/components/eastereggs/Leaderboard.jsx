@@ -21,12 +21,13 @@ export default function Leaderboard({ refreshKey }) {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('all')
   const [diffFilter, setDiffFilter] = useState(null)
+  const [chaosFilter, setChaosFilter] = useState('normal')
 
   useEffect(() => {
     let mounted = true
     setLoading(true)
 
-    getHighscores(10, activeTab, diffFilter).then((data) => {
+    getHighscores(10, activeTab, diffFilter, chaosFilter).then((data) => {
       if (mounted) {
         setScores(data)
         setLoading(false)
@@ -34,7 +35,7 @@ export default function Leaderboard({ refreshKey }) {
     })
 
     return () => { mounted = false }
-  }, [refreshKey, activeTab, diffFilter])
+  }, [refreshKey, activeTab, diffFilter, chaosFilter])
 
   const getRankIcon = (index) => {
     if (index === 0) return <Trophy className="w-4 h-4 text-yellow-400" />
@@ -109,6 +110,29 @@ export default function Leaderboard({ refreshKey }) {
                   </button>
                 )
               })}
+            </div>
+
+            {/* Chaos filter */}
+            <div className="flex gap-1 mb-2 p-0.5 bg-navy/50 rounded-md">
+              {[
+                { key: 'normal', label: 'Normal' },
+                { key: 'chaos', label: '💀 Chaos' },
+                { key: 'all', label: 'All' },
+              ].map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => setChaosFilter(opt.key)}
+                  className={`flex-1 py-1 px-1 text-[10px] font-mono rounded transition-all ${
+                    chaosFilter === opt.key
+                      ? (opt.key === 'chaos'
+                          ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                          : 'bg-primary/20 text-primary border border-primary/30')
+                      : 'text-slate-500 hover:text-slate-300 border border-transparent'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
 
             {/* Difficulty filter */}

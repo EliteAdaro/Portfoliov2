@@ -26,7 +26,9 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET')
 
   try {
-    const { period = 'all', difficulty, limit: limitParam } = req.query
+    const { period = 'all', difficulty, limit: limitParam, chaos } = req.query
+    // chaos: 'normal' (default) | 'chaos' | 'all'
+    const safeChaos = ['normal', 'chaos', 'all'].includes(chaos) ? chaos : 'normal'
 
     // Validate period
     const safePeriod = VALID_PERIODS.includes(period) ? period : 'all'
@@ -44,9 +46,15 @@ export default async function handler(req, res) {
     // Build query — only return name, score, difficulty, created_at (NEVER id or internal fields)
     let query = supabaseAdmin
       .from('snake_highscores')
-      .select('name, score, difficulty, created_at')
+      .select('name, score, difficulty, chaos_count, created_at')
       .order('score', { ascending: false })
       .limit(safeLimit)
+
+    if (safeChaos === 'normal') {
+      query = query.or('chaos_count.is.null,chaos_count.eq.0')
+    } else if (safeChaos === 'chaos') {
+      query = query.gt('chaos_count', 0)
+    }
 
     const periodStart = getPeriodStart(safePeriod)
     if (periodStart) {

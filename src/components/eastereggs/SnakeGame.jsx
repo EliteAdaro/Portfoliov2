@@ -9,7 +9,7 @@ import {
   drawBoard, drawFood, drawBodySegment, drawHead, drawTail,
 } from './snakeDrawHelpers'
 import {
-  createAprilFoolsState, maybeTriggerPrank, onFoodEaten,
+  createChaosState, maybeTriggerPrank, onFoodEaten,
   getSpeedModifier, applyInvertedControls, getShakeOffset,
   getPrankMessage, drawAprilFoolsExtras,
 } from './snakeAprilFools'
@@ -41,7 +41,7 @@ export default function SnakeGame() {
   const gameOverRef = useRef(false)
   const gameStartRef = useRef(Date.now())
   const settingsRef = useRef(settings)
-  const aprilRef = useRef(createAprilFoolsState())
+  const aprilRef = useRef(createChaosState(0))
   const foodSpawnRef = useRef({ x: -1, y: -1, time: 0 })
 
   // Sync settings ref + persist
@@ -57,7 +57,7 @@ export default function SnakeGame() {
     scoreRef.current = 0
     gameOverRef.current = false
     gameStartRef.current = Date.now()
-    aprilRef.current = createAprilFoolsState()
+    aprilRef.current = createChaosState(settingsRef.current?.chaosCount || 0)
     setPrankMsg(null)
     setScore(0)
     setGameOver(false)
@@ -256,9 +256,9 @@ export default function SnakeGame() {
                 <p className="text-lightest-slate font-mono text-sm">
                   Press arrow keys or WASD to start
                 </p>
-                {aprilRef.current.active && (
+                {settings.chaosCount > 0 && (
                   <p className="text-red-400 font-mono text-xs mt-2 animate-pulse">
-                    🎉 April Fools Mode Active! 🎉
+                    💀 Chaos Mode: {settings.chaosCount === 6 ? 'ALL' : settings.chaosCount} feature{settings.chaosCount === 1 ? '' : 's'}
                   </p>
                 )}
               </div>
@@ -270,6 +270,7 @@ export default function SnakeGame() {
               score={score}
               difficulty={settings.difficulty}
               gameDuration={Date.now() - gameStartRef.current}
+              chaosCount={settings.chaosCount || 0}
               onSubmitted={handleScoreSubmitted}
               onSkip={handleSkipSubmit}
             />

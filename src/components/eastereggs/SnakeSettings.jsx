@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Settings, X } from 'lucide-react'
 import { DIFFICULTIES, DEFAULT_DIFFICULTY } from './snakeEngine'
+import { isAprilFools } from './snakeAprilFools'
 
 const COLOR_PRESETS = [
   { name: 'Classic Green', snake: '#64ffda', snakeAlt: '#4fd1b0', label: 'green' },
@@ -53,7 +54,17 @@ export const DEFAULT_SETTINGS = {
   tailStyle: 'advanced',
   foodStyle: 'apple',
   difficulty: DEFAULT_DIFFICULTY,
+  // Default to ALL chaos features on April 1st (users can still turn it off)
+  chaosCount: isAprilFools() ? 6 : 0,
 }
+
+const CHAOS_OPTIONS = [
+  { value: 0, label: 'Off' },
+  { value: 1, label: '1' },
+  { value: 2, label: '2' },
+  { value: 3, label: '3' },
+  { value: 6, label: 'All' },
+]
 
 export default function SnakeSettings({ settings, onChange, open, onToggle, toggleBtnRef }) {
   const panelRef = useRef(null)
@@ -288,6 +299,31 @@ export default function SnakeSettings({ settings, onChange, open, onToggle, togg
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Chaos Mode */}
+      <div>
+        <label className="text-xs font-mono text-slate-300 mb-2 block">
+          💀 Chaos Mode
+        </label>
+        <div className="flex flex-wrap gap-1.5">
+          {CHAOS_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => update('chaosCount', opt.value)}
+              className={`px-2.5 py-1 text-[11px] font-mono rounded border transition-all ${
+                (settings.chaosCount || 0) === opt.value
+                  ? 'border-red-400 text-red-400 bg-red-400/10'
+                  : 'border-navy-lighter text-slate-400 hover:border-slate-500'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <p className="text-[10px] font-mono text-slate-500 mt-1">
+          Picks N random chaos features per game (re-rolled each restart). Scores not submitted.
+        </p>
       </div>
 
       {/* Reset */}

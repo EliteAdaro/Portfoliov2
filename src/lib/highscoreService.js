@@ -11,9 +11,9 @@ const API_BASE = '/api'
  * @param {string|null} difficulty
  * @returns {Promise<Array>}
  */
-export async function getHighscores(limit = 10, period = 'all', difficulty = null) {
+export async function getHighscores(limit = 10, period = 'all', difficulty = null, chaos = 'normal') {
   try {
-    const params = new URLSearchParams({ period, limit: String(limit) })
+    const params = new URLSearchParams({ period, limit: String(limit), chaos })
     if (difficulty) params.set('difficulty', difficulty)
 
     const res = await fetch(`${API_BASE}/highscores?${params}`)
@@ -35,7 +35,7 @@ export async function getHighscores(limit = 10, period = 'all', difficulty = nul
  * @param {number} gameDuration - How long the game lasted in ms
  * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
  */
-export async function submitHighscore(name, score, difficulty = 'normal', gameDuration = 0) {
+export async function submitHighscore(name, score, difficulty = 'normal', gameDuration = 0, chaosCount = 0) {
   // Client-side pre-validation (server validates again)
   const nameCheck = checkName(name)
   if (!nameCheck.clean) {
@@ -55,6 +55,7 @@ export async function submitHighscore(name, score, difficulty = 'normal', gameDu
         score,
         difficulty,
         gameDuration,
+        chaosCount,
       }),
     })
 
