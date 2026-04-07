@@ -275,6 +275,7 @@ export default function SnakeGame() {
               difficulty={settings.difficulty}
               gameDuration={Date.now() - gameStartRef.current}
               chaosCount={settings.chaosCount || 0}
+              won={gameWon}
               onSubmitted={handleScoreSubmitted}
               onSkip={handleSkipSubmit}
             />

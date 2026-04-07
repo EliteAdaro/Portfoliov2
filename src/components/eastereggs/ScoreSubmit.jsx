@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { checkName } from '../../lib/profanityFilter'
 import { submitHighscore } from '../../lib/highscoreService'
 
-export default function ScoreSubmit({ score, difficulty, gameDuration, chaosCount = 0, onSubmitted, onSkip }) {
+export default function ScoreSubmit({ score, difficulty, gameDuration, chaosCount = 0, won = false, onSubmitted, onSkip }) {
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -31,7 +31,9 @@ export default function ScoreSubmit({ score, difficulty, gameDuration, chaosCoun
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-navy/90 rounded-lg z-10">
       <div className="text-center p-6 max-w-xs">
-        <p className="text-2xl font-bold text-primary mb-1">Game Over!</p>
+        <p className={`text-2xl font-bold mb-1 ${won ? 'text-yellow-400' : 'text-primary'}`}>
+          {won ? '🏆 Perfect Game!' : 'Game Over!'}
+        </p>
         <p className="text-lightest-slate font-mono text-sm mb-4">
           Score: <span className="text-primary font-bold">{score}</span>
         </p>

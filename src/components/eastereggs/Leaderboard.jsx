@@ -27,7 +27,7 @@ export default function Leaderboard({ refreshKey }) {
     let mounted = true
     setLoading(true)
 
-    getHighscores(10, activeTab, diffFilter, chaosFilter).then((data) => {
+    getHighscores(15, activeTab, diffFilter, chaosFilter).then((data) => {
       if (mounted) {
         setScores(data)
         setLoading(false)
@@ -65,7 +65,7 @@ export default function Leaderboard({ refreshKey }) {
   }
 
   return (
-    <div className={`transition-all duration-300 ease-in-out ${open ? 'w-72' : 'w-10'}`}>
+    <div className={`transition-all duration-300 ease-in-out ${open ? 'w-80' : 'w-10'}`}>
       <div className="relative h-full">
         {/* Toggle button */}
         <button
@@ -169,7 +169,7 @@ export default function Leaderboard({ refreshKey }) {
                 {activeTab === 'all' && 'No scores yet. Be the first!'}
               </p>
             ) : (
-              <ul className="space-y-1.5">
+              <ul className="space-y-1 max-h-[480px] overflow-y-auto pr-1">
                 {scores.map((entry, i) => (
                   <li
                     key={`${entry.name}-${entry.score}-${i}`}
