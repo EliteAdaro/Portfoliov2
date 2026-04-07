@@ -63,6 +63,8 @@ const CHAOS_OPTIONS = [
   { value: 1, label: '1' },
   { value: 2, label: '2' },
   { value: 3, label: '3' },
+  { value: 4, label: '4' },
+  { value: 5, label: '5' },
   { value: 6, label: 'All' },
 ]
 
@@ -322,7 +324,7 @@ export default function SnakeSettings({ settings, onChange, open, onToggle, togg
           ))}
         </div>
         <p className="text-[10px] font-mono text-slate-500 mt-1">
-          Picks N random chaos features per game (re-rolled each restart). Scores not submitted.
+          Picks N random chaos features per game (re-rolled each restart). Chaos scores have their own leaderboard.
         </p>
       </div>
 

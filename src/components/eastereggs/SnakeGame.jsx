@@ -92,7 +92,11 @@ export default function SnakeGame() {
       { dirRef, dirQueueRef },
       {
         onStart: () => {
-          if (!started && !gameOver) setStarted(true)
+          if (!started && !gameOver) {
+            aprilRef.current = createChaosState(settingsRef.current?.chaosCount || 0)
+            gameStartRef.current = Date.now()
+            setStarted(true)
+          }
         },
       },
     )
@@ -172,7 +176,7 @@ export default function SnakeGame() {
       if (spawn.x !== game.food.x || spawn.y !== game.food.y) {
         foodSpawnRef.current = { x: game.food.x, y: game.food.y, time: performance.now() }
       }
-      const FADE_MS = 140
+      const FADE_MS = 240
       const elapsed = performance.now() - foodSpawnRef.current.time
       const alpha = Math.min(1, elapsed / FADE_MS)
       ctx.save()
