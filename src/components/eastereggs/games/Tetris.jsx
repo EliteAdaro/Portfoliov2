@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 
 // Standard Tetris: 10x20 board, 7 tetrominoes (I, O, T, S, Z, J, L).
-// Controls: ←/→ move, ↓ soft drop, ↑ rotate, space hard drop.
+// Controls: ←/→ move, ↓ soft drop, ↑ rotate, space hard drop, C/Shift hold.
 // Scoring (standard): 1 line = 100, 2 = 300, 3 = 500, 4 (Tetris) = 800.
-// Speed increases per 10 lines cleared.
+// Hold piece: swap current with held piece (once per piece). Next queue
+// shows the upcoming 3 pieces. Speed increases per 10 lines cleared.
 
 const COLS = 10
 const ROWS = 20
@@ -20,8 +21,7 @@ const SHAPES = {
 }
 const KEYS = Object.keys(SHAPES)
 
-function newPiece() {
-  const id = KEYS[Math.floor(Math.random() * KEYS.length)]
+function makePiece(id) {
   const shape = SHAPES[id]
   return {
     id,
@@ -30,6 +30,14 @@ function newPiece() {
     x: 3,
     y: 0,
   }
+}
+
+function randomId() {
+  return KEYS[Math.floor(Math.random() * KEYS.length)]
+}
+
+function newPiece() {
+  return makePiece(randomId())
 }
 
 function emptyBoard() {
@@ -73,19 +81,42 @@ function clearLines(board) {
 
 const LINE_SCORES = [0, 100, 300, 500, 800]
 
+const QUEUE_SIZE = 3
+
+function makeQueue() {
+  return Array.from({ length: QUEUE_SIZE }, randomId)
+}
+
 export default function Tetris() {
   const [board, setBoard] = useState(emptyBoard)
   const [piece, setPiece] = useState(newPiece)
+  const [queue, setQueue] = useState(makeQueue) // upcoming piece IDs
+  const [hold, setHold] = useState(null)        // held piece ID
+  const [canHold, setCanHold] = useState(true)  // only allow once per piece
   const [score, setScore] = useState(0)
   const [lines, setLines] = useState(0)
   const [over, setOver] = useState(false)
   const boardRef = useRef(board)
   const pieceRef = useRef(piece)
+  const queueRef = useRef(queue)
+  const holdRef = useRef(hold)
+  const canHoldRef = useRef(canHold)
   const overRef = useRef(false)
 
   useEffect(() => { boardRef.current = board }, [board])
   useEffect(() => { pieceRef.current = piece }, [piece])
+  useEffect(() => { queueRef.current = queue }, [queue])
+  useEffect(() => { holdRef.current = hold }, [hold])
+  useEffect(() => { canHoldRef.current = canHold }, [canHold])
   useEffect(() => { overRef.current = over }, [over])
+
+  const drawNext = useCallback(() => {
+    const q = [...queueRef.current]
+    const id = q.shift()
+    q.push(randomId())
+    setQueue(q)
+    return makePiece(id)
+  }, [])
 
   const lockAndNext = useCallback((p) => {
     const merged = merge(boardRef.current, p)
@@ -95,13 +126,31 @@ export default function Tetris() {
       setScore((s) => s + LINE_SCORES[lineCount])
       setLines((l) => l + lineCount)
     }
-    const next = newPiece()
+    const next = drawNext()
+    setCanHold(true)
     if (collides(cleared, next)) {
       setOver(true)
     } else {
       setPiece(next)
     }
-  }, [])
+  }, [drawNext])
+
+  const tryHold = useCallback(() => {
+    if (overRef.current || !canHoldRef.current) return
+    const current = pieceRef.current
+    if (holdRef.current === null) {
+      // Empty slot — store current, draw next
+      setHold(current.id)
+      const next = drawNext()
+      setPiece(next)
+    } else {
+      // Swap
+      const swapped = makePiece(holdRef.current)
+      setHold(current.id)
+      setPiece(swapped)
+    }
+    setCanHold(false)
+  }, [drawNext])
 
   const tryMove = useCallback((dx, dy) => {
     if (overRef.current) return false
@@ -153,10 +202,11 @@ export default function Tetris() {
       else if (e.key === 'ArrowDown') { e.preventDefault(); tryMove(0, 1) }
       else if (e.key === 'ArrowUp') { e.preventDefault(); tryRotate() }
       else if (e.key === ' ') { e.preventDefault(); hardDrop() }
+      else if (e.key === 'c' || e.key === 'C' || e.key === 'Shift') { e.preventDefault(); tryHold() }
     }
-    window.addEventListener('keydown', onKey)
+    window.addEventListener('keydown', onKey, { passive: false })
     return () => window.removeEventListener('keydown', onKey)
-  }, [over, tryMove, tryRotate, hardDrop])
+  }, [over, tryMove, tryRotate, hardDrop, tryHold])
 
   // Render to canvas
   const canvasRef = useRef(null)
@@ -196,6 +246,9 @@ export default function Tetris() {
   const reset = () => {
     setBoard(emptyBoard())
     setPiece(newPiece())
+    setQueue(makeQueue())
+    setHold(null)
+    setCanHold(true)
     setScore(0)
     setLines(0)
     setOver(false)
@@ -208,28 +261,73 @@ export default function Tetris() {
         <span className="text-slate-400">Lines: <span className="text-primary">{lines}</span></span>
         <button onClick={reset} className="text-slate-400 hover:text-primary underline">Reset</button>
       </div>
-      <div className="relative">
-        <canvas
-          ref={canvasRef}
-          width={COLS * CELL}
-          height={ROWS * CELL}
-          className="rounded border border-navy-lighter"
-        />
-        {over && (
-          <div className="absolute inset-0 flex items-center justify-center bg-navy/85 rounded">
-            <div className="text-center">
-              <p className="text-red-400 font-mono text-sm mb-1">💀 Game Over</p>
-              <p className="text-primary font-mono text-xs mb-3">Score: {score} • Lines: {lines}</p>
-              <button onClick={reset} className="px-4 py-2 border border-primary text-primary font-mono text-sm rounded hover:bg-primary/10">
-                Play Again
-              </button>
-            </div>
+      <div className="flex gap-3 items-start">
+        {/* Hold panel */}
+        <div className="flex flex-col gap-3">
+          <div>
+            <div className="text-[10px] font-mono text-slate-400 mb-1 text-center">HOLD</div>
+            <PiecePreview id={hold} />
           </div>
-        )}
+        </div>
+
+        {/* Main board */}
+        <div className="relative">
+          <canvas
+            ref={canvasRef}
+            width={COLS * CELL}
+            height={ROWS * CELL}
+            className="rounded border border-navy-lighter"
+          />
+          {over && (
+            <div className="absolute inset-0 flex items-center justify-center bg-navy/85 rounded">
+              <div className="text-center">
+                <p className="text-red-400 font-mono text-sm mb-1">💀 Game Over</p>
+                <p className="text-primary font-mono text-xs mb-3">Score: {score} • Lines: {lines}</p>
+                <button onClick={reset} className="px-4 py-2 border border-primary text-primary font-mono text-sm rounded hover:bg-primary/10">
+                  Play Again
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Next queue */}
+        <div>
+          <div className="text-[10px] font-mono text-slate-400 mb-1 text-center">NEXT</div>
+          <div className="flex flex-col gap-2">
+            {queue.map((id, i) => <PiecePreview key={i} id={id} />)}
+          </div>
+        </div>
       </div>
       <p className="text-[10px] font-mono text-slate-500 mt-2 text-center">
-        ←/→ move • ↑ rotate • ↓ soft drop • Space hard drop
+        ←/→ move • ↑ rotate • ↓ soft drop • Space hard drop • C/Shift hold
       </p>
     </div>
   )
+}
+
+function PiecePreview({ id }) {
+  const SIZE = 16
+  const W = 4 * SIZE
+  const H = 4 * SIZE
+  const ref = useRef(null)
+  useEffect(() => {
+    const ctx = ref.current.getContext('2d')
+    ctx.fillStyle = '#112240'
+    ctx.fillRect(0, 0, W, H)
+    if (!id) return
+    const shape = SHAPES[id]
+    ctx.fillStyle = shape.color
+    // Center the cells
+    const xs = shape.cells.map(([x]) => x)
+    const ys = shape.cells.map(([, y]) => y)
+    const minX = Math.min(...xs), maxX = Math.max(...xs)
+    const minY = Math.min(...ys), maxY = Math.max(...ys)
+    const offX = (4 - (maxX - minX + 1)) / 2 - minX
+    const offY = (4 - (maxY - minY + 1)) / 2 - minY
+    for (const [cx, cy] of shape.cells) {
+      ctx.fillRect((cx + offX) * SIZE + 1, (cy + offY) * SIZE + 1, SIZE - 2, SIZE - 2)
+    }
+  }, [id])
+  return <canvas ref={ref} width={W} height={H} className="rounded border border-navy-lighter bg-[#112240]" />
 }

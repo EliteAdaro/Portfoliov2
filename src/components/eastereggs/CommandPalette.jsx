@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import GamesHubModal from './games/GamesHubModal'
+import GameModal from './games/GameModal'
 
 const COMMANDS = {
   help: {
@@ -20,13 +21,11 @@ const COMMANDS = {
   },
   games: {
     description: 'Browse all mini-games',
-    navigate: '/games',
-    loadingText: '🎮 Loading games hub...',
+    openGames: true,
   },
   snake: {
     description: 'Play Snake game',
-    navigate: '/games/snake',
-    loadingText: '🐍 Loading Snake game...',
+    openGame: 'snake',
   },
   about: {
     description: 'About Kayne',
@@ -88,8 +87,9 @@ const COMMANDS = {
 }
 
 export default function CommandPalette() {
-  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
+  const [gamesHubOpen, setGamesHubOpen] = useState(false)
+  const [activeGame, setActiveGame] = useState(null)
   const [input, setInput] = useState('')
   const [history, setHistory] = useState([
     { type: 'ascii', text: `  _  __                       _   _
@@ -102,23 +102,33 @@ export default function CommandPalette() {
   const inputRef = useRef(null)
   const scrollRef = useRef(null)
 
-  const close = useCallback(() => {
+  const closeAll = useCallback(() => {
     setOpen(false)
+    setGamesHubOpen(false)
+    setActiveGame(null)
     setInput('')
   }, [])
+
+  // Esc closes the topmost modal in the stack (game → hub → terminal)
+  const closeTopmost = useCallback(() => {
+    if (activeGame) setActiveGame(null)
+    else if (gamesHubOpen) setGamesHubOpen(false)
+    else closeAll()
+  }, [activeGame, gamesHubOpen, closeAll])
 
   useEffect(() => {
     const onKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault()
-        setOpen((o) => !o)
+        if (open) closeAll()
+        else setOpen(true)
       }
-      if (e.key === 'Escape') close()
+      if (e.key === 'Escape') closeTopmost()
     }
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [close])
+  }, [open, closeAll, closeTopmost])
 
   useEffect(() => {
     if (open && inputRef.current) {
@@ -146,20 +156,24 @@ export default function CommandPalette() {
     }
 
     if (cmd === 'exit') {
-      close()
+      closeAll()
       return
     }
 
     const command = COMMANDS[cmd]
     if (command) {
-      if (command.navigate) {
-        newHistory.push({ type: 'output', text: command.loadingText || 'Loading...' })
+      if (command.openGames) {
+        newHistory.push({ type: 'output', text: '🎮 Opening games hub...' })
         setHistory(newHistory)
         setInput('')
-        setTimeout(() => {
-          close()
-          navigate(command.navigate, { state: command.navState })
-        }, 600)
+        setGamesHubOpen(true)
+        return
+      }
+      if (command.openGame) {
+        newHistory.push({ type: 'output', text: `🚀 Launching ${command.openGame}...` })
+        setHistory(newHistory)
+        setInput('')
+        setActiveGame(command.openGame)
         return
       }
       const output = command.output || command.action?.()
@@ -184,22 +198,25 @@ export default function CommandPalette() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-          onClick={(e) => e.target === e.currentTarget && close()}
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeAll()
+          }}
         >
           {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto" onClick={closeAll} />
 
           {/* Terminal */}
           <motion.div
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, y: 20 }}
-            className="relative w-full max-w-2xl bg-[#0a192f] border border-[#1d3461] rounded-xl shadow-2xl overflow-hidden"
+            style={{ transform: gamesHubOpen || activeGame ? 'translate(-180px, -60px)' : 'none', transition: 'transform 0.3s ease' }}
+            className="absolute w-full max-w-2xl bg-[#0a192f] border border-[#1d3461] rounded-xl shadow-2xl overflow-hidden pointer-events-auto"
           >
             {/* Title bar */}
             <div className="flex items-center gap-2 px-4 py-3 bg-[#112240] border-b border-[#1d3461]">
-              <button onClick={close} className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-400 transition-colors" />
+              <button onClick={closeAll} className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-400 transition-colors" />
               <div className="w-3 h-3 rounded-full bg-yellow-500" />
               <div className="w-3 h-3 rounded-full bg-green-500" />
               <span className="ml-3 text-xs text-[#8892b0] font-mono">
@@ -250,6 +267,29 @@ export default function CommandPalette() {
               />
             </form>
           </motion.div>
+
+          {/* Games Hub Modal — second window */}
+          <AnimatePresence>
+            <GamesHubModal
+              key="games-hub"
+              open={gamesHubOpen}
+              onClose={() => setGamesHubOpen(false)}
+              onSelectGame={(id) => setActiveGame(id)}
+              offset={120}
+            />
+          </AnimatePresence>
+
+          {/* Active Game Modal — third window */}
+          <AnimatePresence>
+            {activeGame && (
+              <GameModal
+                key={`game-${activeGame}`}
+                gameId={activeGame}
+                onClose={() => setActiveGame(null)}
+                offset={240}
+              />
+            )}
+          </AnimatePresence>
         </motion.div>
       )}
     </AnimatePresence>

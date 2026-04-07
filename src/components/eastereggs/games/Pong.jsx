@@ -11,17 +11,27 @@ const PADDLE_H = 70
 const BALL = 8
 const WIN_SCORE = 7
 const PADDLE_SPEED = 6
-const AI_SPEED = 4.2
-const BALL_SPEED = 4.5
+
+const DIFFICULTIES = {
+  easy:   { label: '🟢 Easy',   aiSpeed: 2.6, ballSpeed: 4.0 },
+  normal: { label: '🟡 Normal', aiSpeed: 4.2, ballSpeed: 4.8 },
+  hard:   { label: '🟠 Hard',   aiSpeed: 5.6, ballSpeed: 5.6 },
+  insane: { label: '💀 Insane', aiSpeed: 7.2, ballSpeed: 6.5 },
+}
 
 export default function Pong() {
   const canvasRef = useRef(null)
   const stateRef = useRef(null)
+  const [difficulty, setDifficulty] = useState('normal')
   const [score, setScore] = useState({ p: 0, a: 0 })
   const [winner, setWinner] = useState(null)
   const keysRef = useRef({})
+  const diffRef = useRef(DIFFICULTIES.normal)
+
+  useEffect(() => { diffRef.current = DIFFICULTIES[difficulty] }, [difficulty])
 
   const reset = (resetScore = true) => {
+    const d = DIFFICULTIES[difficulty]
     stateRef.current = {
       px: 20,
       py: H / 2 - PADDLE_H / 2,
@@ -29,8 +39,8 @@ export default function Pong() {
       ay: H / 2 - PADDLE_H / 2,
       bx: W / 2,
       by: H / 2,
-      bvx: BALL_SPEED * (Math.random() < 0.5 ? -1 : 1),
-      bvy: (Math.random() - 0.5) * BALL_SPEED,
+      bvx: d.ballSpeed * (Math.random() < 0.5 ? -1 : 1),
+      bvy: (Math.random() - 0.5) * d.ballSpeed,
     }
     if (resetScore) {
       setScore({ p: 0, a: 0 })
@@ -40,12 +50,18 @@ export default function Pong() {
 
   useEffect(() => {
     reset()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [difficulty])
 
   useEffect(() => {
-    const onDown = (e) => { keysRef.current[e.key.toLowerCase()] = true }
+    const blockKeys = ['arrowup', 'arrowdown', ' ']
+    const onDown = (e) => {
+      const key = e.key.toLowerCase()
+      if (blockKeys.includes(key)) e.preventDefault() // stop page scroll
+      keysRef.current[key] = true
+    }
     const onUp = (e) => { keysRef.current[e.key.toLowerCase()] = false }
-    window.addEventListener('keydown', onDown)
+    window.addEventListener('keydown', onDown, { passive: false })
     window.addEventListener('keyup', onUp)
     return () => {
       window.removeEventListener('keydown', onDown)
@@ -67,10 +83,11 @@ export default function Pong() {
       if (k['s'] || k['arrowdown']) s.py += PADDLE_SPEED
       s.py = Math.max(0, Math.min(H - PADDLE_H, s.py))
 
-      // AI movement (tracks ball, capped speed)
+      // AI movement (tracks ball, capped speed by difficulty)
+      const aiSpeed = diffRef.current.aiSpeed
       const target = s.by - PADDLE_H / 2
-      if (s.ay < target) s.ay += Math.min(AI_SPEED, target - s.ay)
-      else s.ay -= Math.min(AI_SPEED, s.ay - target)
+      if (s.ay < target) s.ay += Math.min(aiSpeed, target - s.ay)
+      else s.ay -= Math.min(aiSpeed, s.ay - target)
       s.ay = Math.max(0, Math.min(H - PADDLE_H, s.ay))
 
       // Ball
@@ -84,15 +101,16 @@ export default function Pong() {
       const hitsPaddle = (px, py) =>
         s.bx < px + PADDLE_W && s.bx + BALL > px && s.by < py + PADDLE_H && s.by + BALL > py
 
+      const ballSpeed = diffRef.current.ballSpeed
       if (hitsPaddle(s.px, s.py) && s.bvx < 0) {
         const offset = (s.by + BALL / 2 - (s.py + PADDLE_H / 2)) / (PADDLE_H / 2)
-        s.bvx = Math.abs(BALL_SPEED) + 0.3
-        s.bvy = offset * BALL_SPEED
+        s.bvx = Math.abs(ballSpeed) + 0.3
+        s.bvy = offset * ballSpeed
       }
       if (hitsPaddle(s.ax, s.ay) && s.bvx > 0) {
         const offset = (s.by + BALL / 2 - (s.ay + PADDLE_H / 2)) / (PADDLE_H / 2)
-        s.bvx = -(Math.abs(BALL_SPEED) + 0.3)
-        s.bvy = offset * BALL_SPEED
+        s.bvx = -(Math.abs(ballSpeed) + 0.3)
+        s.bvy = offset * ballSpeed
       }
 
       // Score
@@ -140,6 +158,21 @@ export default function Pong() {
         <span>You: <span className="text-primary">{score.p}</span></span>
         <span className="text-xs text-slate-500">First to {WIN_SCORE}</span>
         <span>AI: <span className="text-red-400">{score.a}</span></span>
+      </div>
+      <div className="flex flex-wrap gap-1.5 mb-3 justify-center">
+        {Object.entries(DIFFICULTIES).map(([key, d]) => (
+          <button
+            key={key}
+            onClick={() => { setDifficulty(key); setWinner(null) }}
+            className={`px-2.5 py-1 text-[11px] font-mono rounded border transition-all ${
+              difficulty === key
+                ? 'border-primary text-primary bg-primary/10'
+                : 'border-navy-lighter text-slate-400 hover:border-slate-500'
+            }`}
+          >
+            {d.label}
+          </button>
+        ))}
       </div>
       <canvas ref={canvasRef} width={W} height={H} className="rounded border border-navy-lighter w-full max-w-full" />
       <p className="text-[10px] font-mono text-slate-500 mt-2 text-center">W/S or ↑/↓ to move</p>

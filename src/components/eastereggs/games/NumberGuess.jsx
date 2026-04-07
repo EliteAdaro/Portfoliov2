@@ -1,16 +1,30 @@
-import { useState, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 
-// Standard rules: random number 1-100, player gets 7 guesses, hi/lo feedback.
+// Number Guess: random number 1-100, 7 guesses, hi/lo feedback.
+// Visual range bar narrows as you guess; history shown as chips.
+
 const MAX_GUESSES = 7
+const MIN = 1
+const MAX = 100
 
 export default function NumberGuess() {
-  const [target, setTarget] = useState(() => Math.floor(Math.random() * 100) + 1)
+  const [target, setTarget] = useState(() => Math.floor(Math.random() * MAX) + 1)
   const [guess, setGuess] = useState('')
-  const [history, setHistory] = useState([]) // [{ value, hint }]
-  const [status, setStatus] = useState('playing') // playing | won | lost
+  const [history, setHistory] = useState([])
+  const [status, setStatus] = useState('playing')
+
+  // Narrowed range derived from history
+  const { lo, hi } = useMemo(() => {
+    let lo = MIN, hi = MAX
+    for (const h of history) {
+      if (h.value < target && h.value >= lo) lo = h.value + 1
+      if (h.value > target && h.value <= hi) hi = h.value - 1
+    }
+    return { lo, hi }
+  }, [history, target])
 
   const reset = () => {
-    setTarget(Math.floor(Math.random() * 100) + 1)
+    setTarget(Math.floor(Math.random() * MAX) + 1)
     setGuess('')
     setHistory([])
     setStatus('playing')
@@ -20,14 +34,14 @@ export default function NumberGuess() {
     e.preventDefault()
     if (status !== 'playing') return
     const n = parseInt(guess, 10)
-    if (isNaN(n) || n < 1 || n > 100) return
+    if (isNaN(n) || n < MIN || n > MAX) return
 
-    let hint
-    if (n === target) hint = '🎯 Correct!'
-    else if (n < target) hint = '⬆️ Higher'
-    else hint = '⬇️ Lower'
+    let hint, icon, color
+    if (n === target) { hint = 'Correct'; icon = '🎯'; color = 'text-green-400' }
+    else if (n < target) { hint = 'Higher'; icon = '⬆️'; color = 'text-cyan-400' }
+    else { hint = 'Lower'; icon = '⬇️'; color = 'text-orange-400' }
 
-    const next = [...history, { value: n, hint }]
+    const next = [...history, { value: n, hint, icon, color }]
     setHistory(next)
     setGuess('')
 
@@ -35,49 +49,109 @@ export default function NumberGuess() {
     else if (next.length >= MAX_GUESSES) setStatus('lost')
   }
 
-  return (
-    <div className="bg-navy-light/50 border border-navy-lighter rounded-xl p-6 max-w-sm w-full">
-      <p className="text-xs font-mono text-slate-400 mb-4">
-        Guess the number between <span className="text-primary">1</span> and <span className="text-primary">100</span>. You have <span className="text-primary">{MAX_GUESSES - history.length}</span> guesses left.
-      </p>
+  const remaining = MAX_GUESSES - history.length
+  const loPct = ((lo - MIN) / (MAX - MIN)) * 100
+  const hiPct = ((hi - MIN) / (MAX - MIN)) * 100
+  const lastGuess = history[history.length - 1]
 
+  return (
+    <div className="bg-navy-light/50 border border-navy-lighter rounded-xl p-6 max-w-md w-full">
+      {/* Header */}
+      <div className="text-center mb-5">
+        <div className="text-[10px] font-mono text-slate-400 uppercase tracking-widest mb-1">Guess the number</div>
+        <div className="text-4xl font-mono font-bold text-primary">{MIN} – {MAX}</div>
+      </div>
+
+      {/* Guess pips */}
+      <div className="flex justify-center gap-1.5 mb-5">
+        {Array.from({ length: MAX_GUESSES }).map((_, i) => (
+          <div
+            key={i}
+            className={`h-2 w-8 rounded-full transition-colors ${
+              i < history.length
+                ? history[i].hint === 'Correct' ? 'bg-green-400' : 'bg-primary/60'
+                : 'bg-navy-lighter'
+            }`}
+          />
+        ))}
+      </div>
+
+      {/* Range visualizer */}
+      <div className="mb-5">
+        <div className="flex justify-between text-[10px] font-mono text-slate-500 mb-1">
+          <span>{MIN}</span>
+          <span className="text-primary">Range: {lo} – {hi}</span>
+          <span>{MAX}</span>
+        </div>
+        <div className="relative h-3 bg-navy rounded-full overflow-hidden border border-navy-lighter">
+          <div
+            className="absolute h-full bg-gradient-to-r from-primary/40 via-primary/60 to-primary/40"
+            style={{ left: `${loPct}%`, width: `${Math.max(0, hiPct - loPct)}%` }}
+          />
+          {lastGuess && (
+            <div
+              className="absolute top-0 h-full w-0.5 bg-yellow-400"
+              style={{ left: `${((lastGuess.value - MIN) / (MAX - MIN)) * 100}%` }}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Last hint banner */}
+      {lastGuess && status === 'playing' && (
+        <div className={`text-center mb-4 font-mono text-sm ${lastGuess.color}`}>
+          {lastGuess.icon} {lastGuess.value} → Try {lastGuess.hint.toLowerCase()}
+        </div>
+      )}
+
+      {/* Input */}
       <form onSubmit={submit} className="flex gap-2 mb-4">
         <input
           type="number"
-          min={1}
-          max={100}
+          min={lo}
+          max={hi}
           value={guess}
           onChange={(e) => setGuess(e.target.value)}
           disabled={status !== 'playing'}
-          className="flex-1 px-3 py-2 bg-navy border border-navy-lighter rounded text-lightest-slate font-mono text-sm focus:outline-none focus:border-primary"
-          placeholder="1-100"
+          autoFocus
+          className="flex-1 px-3 py-2 bg-navy border border-navy-lighter rounded text-lightest-slate font-mono text-center text-lg focus:outline-none focus:border-primary"
+          placeholder={`${lo}–${hi}`}
         />
         <button
           type="submit"
-          disabled={status !== 'playing'}
-          className="px-4 py-2 bg-primary text-navy font-mono text-sm font-semibold rounded hover:bg-primary-dark disabled:opacity-40"
+          disabled={status !== 'playing' || !guess}
+          className="px-5 py-2 bg-primary text-navy font-mono text-sm font-bold rounded hover:bg-primary-dark disabled:opacity-40"
         >
           Guess
         </button>
       </form>
 
-      <ul className="space-y-1 mb-4 min-h-[140px]">
-        {history.map((h, i) => (
-          <li key={i} className="flex justify-between text-xs font-mono text-slate-300 px-2 py-1 bg-navy/40 rounded">
-            <span>#{i + 1}: <span className="text-primary">{h.value}</span></span>
-            <span>{h.hint}</span>
-          </li>
-        ))}
-      </ul>
+      {/* History chips */}
+      {history.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 justify-center mb-2">
+          {history.map((h, i) => (
+            <span
+              key={i}
+              className={`px-2 py-1 text-[11px] font-mono rounded border border-navy-lighter bg-navy/40 ${h.color}`}
+            >
+              {h.icon} {h.value}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <p className="text-center text-[10px] font-mono text-slate-500">
+        {remaining} {remaining === 1 ? 'guess' : 'guesses'} left
+      </p>
 
       {status === 'won' && (
-        <div className="text-center">
-          <p className="text-green-400 font-mono text-sm mb-3">🏆 You got it in {history.length} {history.length === 1 ? 'try' : 'tries'}!</p>
+        <div className="text-center mt-4">
+          <p className="text-green-400 font-mono text-sm mb-3">🏆 Got it in {history.length} {history.length === 1 ? 'try' : 'tries'}!</p>
           <button onClick={reset} className="px-4 py-2 border border-primary text-primary font-mono text-sm rounded hover:bg-primary/10">Play Again</button>
         </div>
       )}
       {status === 'lost' && (
-        <div className="text-center">
+        <div className="text-center mt-4">
           <p className="text-red-400 font-mono text-sm mb-1">💀 Out of guesses!</p>
           <p className="text-slate-400 font-mono text-xs mb-3">The number was <span className="text-primary">{target}</span></p>
           <button onClick={reset} className="px-4 py-2 border border-primary text-primary font-mono text-sm rounded hover:bg-primary/10">Try Again</button>

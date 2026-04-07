@@ -25,7 +25,8 @@ export default function Reaction() {
 
   const start = () => {
     setState(STATES.WAITING)
-    const delay = 1500 + Math.random() * 3500 // 1.5–5s
+    // Wide random range — 0.6s to 7.5s, can be very fast or slow
+    const delay = 600 + Math.random() * 6900
     timeoutRef.current = setTimeout(() => {
       goTimeRef.current = performance.now()
       setState(STATES.GO)

@@ -23,6 +23,10 @@ export default function Typing() {
   const [startedAt, setStartedAt] = useState(null)
   const [timeLeft, setTimeLeft] = useState(DURATION_S)
   const [done, setDone] = useState(false)
+  // Cumulative stats — never decrement on backspace
+  const [totalTyped, setTotalTyped] = useState(0)
+  const [totalErrors, setTotalErrors] = useState(0)
+  const prevLenRef = useRef(0)
   const inputRef = useRef(null)
 
   useEffect(() => {
@@ -42,7 +46,20 @@ export default function Typing() {
   const handleChange = (e) => {
     if (done) return
     if (!startedAt) setStartedAt(Date.now())
-    setInput(e.target.value)
+    const newInput = e.target.value
+    // Only count NEW chars (don't count on backspace)
+    if (newInput.length > prevLenRef.current) {
+      let newChars = 0
+      let newErrors = 0
+      for (let i = prevLenRef.current; i < newInput.length; i++) {
+        newChars++
+        if (newInput[i] !== target[i]) newErrors++
+      }
+      setTotalTyped((t) => t + newChars)
+      setTotalErrors((e) => e + newErrors)
+    }
+    prevLenRef.current = newInput.length
+    setInput(newInput)
   }
 
   const reset = () => {
@@ -51,15 +68,21 @@ export default function Typing() {
     setStartedAt(null)
     setTimeLeft(DURATION_S)
     setDone(false)
+    setTotalTyped(0)
+    setTotalErrors(0)
+    prevLenRef.current = 0
     setTimeout(() => inputRef.current?.focus(), 50)
   }
 
-  // Stats
-  let correct = 0
-  for (let i = 0; i < input.length; i++) if (input[i] === target[i]) correct++
-  const minutes = startedAt ? Math.max(0.001, (Date.now() - startedAt) / 60000) : 1
-  const wpm = done || !startedAt ? Math.round((correct / 5) / (DURATION_S / 60)) : Math.round((correct / 5) / minutes)
-  const accuracy = input.length ? Math.round((correct / input.length) * 100) : 100
+  // Stats — count currently-correct chars for WPM (standard net WPM)
+  let correctNow = 0
+  for (let i = 0; i < input.length; i++) if (input[i] === target[i]) correctNow++
+  const elapsedSec = startedAt ? Math.max(1, (Date.now() - startedAt) / 1000) : DURATION_S
+  const minutesElapsed = elapsedSec / 60
+  const wpm = Math.round((correctNow / 5) / Math.max(0.05, minutesElapsed))
+  const accuracy = totalTyped > 0
+    ? Math.max(0, Math.round(((totalTyped - totalErrors) / totalTyped) * 100))
+    : 100
 
   return (
     <div className="bg-navy-light/50 border border-navy-lighter rounded-xl p-6 max-w-2xl w-full">
