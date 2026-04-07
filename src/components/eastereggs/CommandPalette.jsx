@@ -12,15 +12,21 @@ const COMMANDS = {
   contact    — Get in touch
   resume     — Download CV
   theme      — Toggle dark/light mode
-  snake      — 🐍 Play Snake!
+  games      — 🎮 Browse all mini-games
+  snake      — 🐍 Quick-launch Snake
   clear      — Clear terminal
   sudo hire kayne — ???
   exit       — Close terminal`,
   },
+  games: {
+    description: 'Browse all mini-games',
+    navigate: '/games',
+    loadingText: '🎮 Loading games hub...',
+  },
   snake: {
     description: 'Play Snake game',
-    navigate: '/snake',
-    navState: { startGame: true },
+    navigate: '/games/snake',
+    loadingText: '🐍 Loading Snake game...',
   },
   about: {
     description: 'About Kayne',
@@ -147,7 +153,7 @@ export default function CommandPalette() {
     const command = COMMANDS[cmd]
     if (command) {
       if (command.navigate) {
-        newHistory.push({ type: 'output', text: '🐍 Loading Snake game...' })
+        newHistory.push({ type: 'output', text: command.loadingText || 'Loading...' })
         setHistory(newHistory)
         setInput('')
         setTimeout(() => {

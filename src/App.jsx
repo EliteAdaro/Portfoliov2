@@ -3,6 +3,8 @@ import { ThemeProvider } from './context/ThemeContext'
 import Layout from './components/layout/Layout'
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
+import GamesHubPage from './pages/GamesHubPage'
+import GamePlayPage from './pages/GamePlayPage'
 
 // Easter eggs — lazy loaded to keep initial bundle small
 import { lazy, Suspense } from 'react'
@@ -20,6 +22,8 @@ export default function App() {
         <Layout>
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/games" element={<GamesHubPage />} />
+            <Route path="/games/:id" element={<GamePlayPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Layout>
