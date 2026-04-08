@@ -85,7 +85,7 @@ const SONGS = [
   { // "I can't sleep until I feel your touch"
     name: 'Blinding Lights — The Weeknd',
     notes: ['Fs4','Fs4','E4','Ds4','Cs4','B3','Cs4','Ds4','E4','Fs4','E4','Ds4','Cs4','B3','Cs4','Ds4','E4','Fs4','B4','A4','Fs4','E4'],
-    stepMs: 200,
+    stepMs: 380,
   },
   { // "I got the eye of the tiger, a fighter"
     name: 'Roar — Katy Perry',
@@ -110,7 +110,7 @@ const SONGS = [
   { // "I need you to stay, need you to stay, hey"
     name: 'Stay — The Kid LAROI & Justin Bieber',
     notes: ['A4','G4','F4','E4','A4','G4','F4','E4','A4','G4','F4','E4','D4','E4','F4','E4','D4','C4'],
-    stepMs: 180,
+    stepMs: 360,
   },
   { // "Where are you now? Atlantis, under the sea"
     name: 'Faded — Alan Walker',
@@ -162,16 +162,22 @@ function SimonGame() {
     setPhase('showing')
     timeoutsRef.current.forEach(clearTimeout)
     timeoutsRef.current = []
-    // Step duration: classic = fixed; melody = song bpm
-    const step = mode === 'melody' ? (s.stepMs || 260) : 480
-    const litMs = Math.max(120, step * 0.7)
+    // Comfortable playback tempo — fast enough to feel like the song,
+    // slow enough that repeated pads are clearly visible as separate flashes.
+    // Player input is untimed, so this is purely cosmetic / for recognition.
+    const baseStep = mode === 'melody' ? (s.stepMs || 320) : 480
+    const step = Math.max(360, baseStep)         // floor for visibility
+    const litMs = Math.round(step * 0.55)         // big OFF gap between notes
     for (let i = 0; i < len; i++) {
       const { pad, freq } = getStep(i, mode, s, seq)
+      const onAt = i * step + 400
       const onT = setTimeout(() => {
-        setActivePad(pad)
+        // Force re-trigger even on consecutive same-pad notes
+        setActivePad(null)
+        setTimeout(() => setActivePad(pad), 10)
         playTone(freq, litMs + 60)
-      }, i * step + 400)
-      const offT = setTimeout(() => setActivePad(null), i * step + 400 + litMs)
+      }, onAt)
+      const offT = setTimeout(() => setActivePad(null), onAt + litMs)
       timeoutsRef.current.push(onT, offT)
     }
     const doneT = setTimeout(() => {
