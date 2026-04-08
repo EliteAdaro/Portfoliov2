@@ -62,8 +62,40 @@ export default function Simon() {
   )
 }
 
+// Note frequencies (chromatic, A3–E5)
+const NOTE = {
+  A3: 220.00, As3: 233.08, B3: 246.94,
+  C4: 261.63, Cs4: 277.18, D4: 293.66, Ds4: 311.13, E4: 329.63, F4: 349.23,
+  Fs4: 369.99, G4: 392.00, Gs4: 415.30, A4: 440.00, As4: 466.16, B4: 493.88,
+  C5: 523.25, Cs5: 554.37, D5: 587.33, Ds5: 622.25, E5: 659.25,
+}
+// Map note → pad index by pitch group (low / mid-low / mid-high / high)
+const NOTE_TO_PAD = {
+  A3: 0, As3: 0, B3: 0, C4: 0, Cs4: 0, D4: 0, Ds4: 0,
+  E4: 1, F4: 1, Fs4: 1,
+  G4: 2, Gs4: 2, A4: 2, As4: 2,
+  B4: 3, C5: 3, Cs5: 3, D5: 3, Ds5: 3, E5: 3,
+}
+
+// Recognizable hooks from popular 2010-2024 hits (approximate transcriptions).
+const SONGS = [
+  { name: 'Blinding Lights — The Weeknd', notes: ['Fs4','Fs4','B4','Fs4','E4','Fs4','B4','Cs5','B4','Fs4','E4','Ds4','Cs4','B3','Fs4','Fs4','B4','Fs4','E4','Fs4','B4','Cs5','D5','Cs5','B4','A4','Fs4'] },
+  { name: 'Bad Guy — Billie Eilish',      notes: ['G4','G4','G4','G4','G4','G4','Fs4','G4','B4','G4','G4','G4','G4','G4','G4','Fs4','G4','C5','G4','G4','G4','G4','G4','G4','Fs4','G4','D5'] },
+  { name: 'Shape of You — Ed Sheeran',    notes: ['Cs5','Cs5','Cs5','B4','A4','B4','Cs5','Cs5','B4','A4','Fs4','A4','B4','Cs5','B4','A4','Fs4','E4','Fs4','A4','B4','Cs5','B4','A4'] },
+  { name: 'Levitating — Dua Lipa',        notes: ['B4','A4','G4','A4','B4','D5','B4','A4','G4','A4','B4','D5','E5','D5','B4','A4','G4','E4','G4','A4','B4','A4','G4'] },
+  { name: 'Animals — Martin Garrix',      notes: ['B4','B4','D5','B4','A4','B4','D5','E5','B4','B4','D5','B4','A4','G4','Fs4','E4','B4','B4','D5','B4','A4','B4','D5','E5'] },
+  { name: 'Faded — Alan Walker',          notes: ['Fs4','E4','Cs4','B3','Cs4','E4','Fs4','A4','Fs4','E4','Cs4','B3','A3','B3','Cs4','E4','Fs4','A4','B4','A4','Fs4','E4','Cs4'] },
+  { name: 'Shake It Off — Taylor Swift',  notes: ['B4','B4','B4','A4','B4','G4','B4','B4','B4','A4','B4','G4','E4','G4','A4','B4','A4','G4','E4','G4','A4','G4','E4'] },
+  { name: 'Roar — Katy Perry',            notes: ['C4','C4','C4','C4','A4','G4','C4','C4','C4','D4','C4','A4','G4','E4','D4','C4','C4','C4','D4','E4','G4','A4','G4'] },
+  { name: 'Despacito — Luis Fonsi',       notes: ['B4','A4','Fs4','D4','Fs4','A4','B4','A4','Fs4','D4','E4','Fs4','G4','Fs4','E4','D4','E4','Fs4','G4','A4','B4','A4','G4','Fs4','E4'] },
+  { name: 'Believer — Imagine Dragons',   notes: ['A4','A4','C5','A4','A4','G4','A4','A4','C5','A4','A4','G4','E4','A4','A4','C5','D5','C5','A4','G4','E4','D4','E4','G4','A4'] },
+]
+
 function SimonGame() {
-  const [sequence, setSequence] = useState([])
+  const [variant, setVariant] = useState('classic') // classic | melody
+  const [song, setSong] = useState(SONGS[0])
+  const [randomSeq, setRandomSeq] = useState([]) // for classic mode
+  const [round, setRound] = useState(0)
   const [playerIdx, setPlayerIdx] = useState(0)
   const [activePad, setActivePad] = useState(null)
   const [phase, setPhase] = useState('idle')
@@ -72,40 +104,60 @@ function SimonGame() {
 
   useEffect(() => () => timeoutsRef.current.forEach(clearTimeout), [])
 
-  const showSequence = (seq) => {
+  // For melody mode get pad from note. For classic mode item is just a pad id.
+  const getStep = (i, mode, s, seq) => {
+    if (mode === 'melody') {
+      const note = s.notes[i]
+      return { pad: NOTE_TO_PAD[note], freq: NOTE[note] }
+    }
+    const pad = seq[i]
+    return { pad, freq: GAME_PADS[pad].freq }
+  }
+
+  const showSequence = (len, mode = variant, s = song, seq = randomSeq) => {
     setPhase('showing')
     timeoutsRef.current.forEach(clearTimeout)
     timeoutsRef.current = []
-    seq.forEach((id, i) => {
+    for (let i = 0; i < len; i++) {
+      const { pad, freq } = getStep(i, mode, s, seq)
       const onT = setTimeout(() => {
-        setActivePad(id)
-        playTone(GAME_PADS[id].freq)
-      }, i * 600 + 400)
-      const offT = setTimeout(() => setActivePad(null), i * 600 + 700)
+        setActivePad(pad)
+        playTone(freq, 380)
+      }, i * 480 + 400)
+      const offT = setTimeout(() => setActivePad(null), i * 480 + 720)
       timeoutsRef.current.push(onT, offT)
-    })
+    }
     const doneT = setTimeout(() => {
       setPhase('input')
       setPlayerIdx(0)
-    }, seq.length * 600 + 500)
+    }, len * 480 + 500)
     timeoutsRef.current.push(doneT)
   }
 
   const start = () => {
-    const first = [Math.floor(Math.random() * 4)]
-    setSequence(first)
-    showSequence(first)
+    if (variant === 'melody') {
+      const s = SONGS[Math.floor(Math.random() * SONGS.length)]
+      setSong(s)
+      setRound(1)
+      showSequence(1, 'melody', s, [])
+    } else {
+      const seq = [Math.floor(Math.random() * 4)]
+      setRandomSeq(seq)
+      setRound(1)
+      showSequence(1, 'classic', song, seq)
+    }
   }
 
   const handlePad = (id) => {
     if (phase !== 'input') return
+    const { pad: expectedPad, freq } = getStep(playerIdx, variant, song, randomSeq)
     setActivePad(id)
-    playTone(GAME_PADS[id].freq, 200)
+    playTone(freq, 200)
     setTimeout(() => setActivePad(null), 200)
 
-    if (id !== sequence[playerIdx]) {
+    if (id !== expectedPad) {
       setPhase('gameover')
-      const score = sequence.length - 1
+      const score = round - 1
       if (score > best) {
         setBest(score)
         localStorage.setItem('simon-best', String(score))
@@ -113,27 +165,75 @@ function SimonGame() {
       return
     }
 
-    if (playerIdx + 1 === sequence.length) {
-      const next = [...sequence, Math.floor(Math.random() * 4)]
-      setSequence(next)
-      setTimeout(() => showSequence(next), 600)
+    if (playerIdx + 1 === round) {
+      // Round complete
+      if (variant === 'melody' && round >= song.notes.length) {
+        setPhase('won')
+        if (round > best) {
+          setBest(round)
+          localStorage.setItem('simon-best', String(round))
+        }
+        return
+      }
+      const nextRound = round + 1
+      setRound(nextRound)
+      if (variant === 'classic') {
+        const newSeq = [...randomSeq, Math.floor(Math.random() * 4)]
+        setRandomSeq(newSeq)
+        setTimeout(() => showSequence(nextRound, 'classic', song, newSeq), 600)
+      } else {
+        setTimeout(() => showSequence(nextRound, 'melody', song, randomSeq), 600)
+      }
     } else {
       setPlayerIdx(playerIdx + 1)
     }
   }
 
   const reset = () => {
-    setSequence([])
+    setRound(0)
     setPlayerIdx(0)
     setActivePad(null)
+    setRandomSeq([])
     setPhase('idle')
   }
 
+  const switchVariant = (v) => {
+    if (phase !== 'idle' && phase !== 'gameover' && phase !== 'won') return
+    setVariant(v)
+    reset()
+  }
+
+  // Reveal song name after 10 notes (when player likely recognizes it)
+  const revealSong = round >= 10
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-4 font-mono text-xs">
-        <span className="text-slate-400">Round: <span className="text-primary">{Math.max(0, sequence.length - (phase === 'showing' || phase === 'input' ? 0 : 1))}</span></span>
+      <div className="flex gap-2 justify-center mb-3">
+        {[
+          { id: 'classic', label: '🔵 Classic' },
+          { id: 'melody',  label: '🎵 Melody' },
+        ].map((v) => (
+          <button
+            key={v.id}
+            onClick={() => switchVariant(v.id)}
+            className={`px-3 py-1 text-[10px] font-mono rounded border transition-all ${
+              variant === v.id ? 'border-primary text-primary bg-primary/10' : 'border-navy-lighter text-slate-400 hover:border-slate-500'
+            }`}
+          >
+            {v.label}
+          </button>
+        ))}
+      </div>
+      <div className="flex items-center justify-between mb-2 font-mono text-xs">
+        <span className="text-slate-400">Round: <span className="text-primary">{round}</span></span>
         <span className="text-slate-400">Best: <span className="text-primary">{best}</span></span>
+      </div>
+      <div className="text-center mb-3 font-mono text-[11px] h-4">
+        {variant === 'melody' && phase !== 'idle' && (
+          revealSong
+            ? <span className="text-primary">🎵 {song.name}</span>
+            : <span className="text-slate-500">🎵 ??? — keep going to recognize it</span>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3 w-64 mx-auto">
@@ -157,9 +257,20 @@ function SimonGame() {
         )}
         {phase === 'showing' && <p className="text-xs font-mono text-slate-400">Watch the pattern...</p>}
         {phase === 'input' && <p className="text-xs font-mono text-primary">Your turn — repeat it</p>}
+        {phase === 'won' && (
+          <>
+            <p className="text-green-400 font-mono text-sm mb-2">🏆 You played the whole song! ({song.name})</p>
+            <button onClick={reset} className="px-4 py-2 border border-primary text-primary font-mono text-sm rounded hover:bg-primary/10">
+              Play Again
+            </button>
+          </>
+        )}
         {phase === 'gameover' && (
           <>
-            <p className="text-red-400 font-mono text-sm mb-2">💀 Game Over — score: {sequence.length - 1}</p>
+            <p className="text-red-400 font-mono text-sm mb-1">💀 Game Over — score: {round - 1}</p>
+            {variant === 'melody' && (
+              <p className="text-slate-400 font-mono text-[11px] mb-2">Song was: <span className="text-primary">{song.name}</span></p>
+            )}
             <button onClick={reset} className="px-4 py-2 border border-primary text-primary font-mono text-sm rounded hover:bg-primary/10">
               Try Again
             </button>
