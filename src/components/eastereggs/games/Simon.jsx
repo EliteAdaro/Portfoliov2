@@ -77,18 +77,62 @@ const NOTE_TO_PAD = {
   B4: 3, C5: 3, Cs5: 3, D5: 3, Ds5: 3, E5: 3,
 }
 
-// Recognizable hooks from popular 2010-2024 hits (approximate transcriptions).
+// Recognizable CHORUS hooks from popular 2010-2024 hits.
+// Each hook starts at the most iconic / recognizable bar (not the intro)
+// and uses notes with melodic variation (no monotone runs).
+// stepMs = how fast notes are played during the SHOW phase (player input is untimed).
 const SONGS = [
-  { name: 'Blinding Lights — The Weeknd', notes: ['Fs4','Fs4','B4','Fs4','E4','Fs4','B4','Cs5','B4','Fs4','E4','Ds4','Cs4','B3','Fs4','Fs4','B4','Fs4','E4','Fs4','B4','Cs5','D5','Cs5','B4','A4','Fs4'] },
-  { name: 'Bad Guy — Billie Eilish',      notes: ['G4','G4','G4','G4','G4','G4','Fs4','G4','B4','G4','G4','G4','G4','G4','G4','Fs4','G4','C5','G4','G4','G4','G4','G4','G4','Fs4','G4','D5'] },
-  { name: 'Shape of You — Ed Sheeran',    notes: ['Cs5','Cs5','Cs5','B4','A4','B4','Cs5','Cs5','B4','A4','Fs4','A4','B4','Cs5','B4','A4','Fs4','E4','Fs4','A4','B4','Cs5','B4','A4'] },
-  { name: 'Levitating — Dua Lipa',        notes: ['B4','A4','G4','A4','B4','D5','B4','A4','G4','A4','B4','D5','E5','D5','B4','A4','G4','E4','G4','A4','B4','A4','G4'] },
-  { name: 'Animals — Martin Garrix',      notes: ['B4','B4','D5','B4','A4','B4','D5','E5','B4','B4','D5','B4','A4','G4','Fs4','E4','B4','B4','D5','B4','A4','B4','D5','E5'] },
-  { name: 'Faded — Alan Walker',          notes: ['Fs4','E4','Cs4','B3','Cs4','E4','Fs4','A4','Fs4','E4','Cs4','B3','A3','B3','Cs4','E4','Fs4','A4','B4','A4','Fs4','E4','Cs4'] },
-  { name: 'Shake It Off — Taylor Swift',  notes: ['B4','B4','B4','A4','B4','G4','B4','B4','B4','A4','B4','G4','E4','G4','A4','B4','A4','G4','E4','G4','A4','G4','E4'] },
-  { name: 'Roar — Katy Perry',            notes: ['C4','C4','C4','C4','A4','G4','C4','C4','C4','D4','C4','A4','G4','E4','D4','C4','C4','C4','D4','E4','G4','A4','G4'] },
-  { name: 'Despacito — Luis Fonsi',       notes: ['B4','A4','Fs4','D4','Fs4','A4','B4','A4','Fs4','D4','E4','Fs4','G4','Fs4','E4','D4','E4','Fs4','G4','A4','B4','A4','G4','Fs4','E4'] },
-  { name: 'Believer — Imagine Dragons',   notes: ['A4','A4','C5','A4','A4','G4','A4','A4','C5','A4','A4','G4','E4','A4','A4','C5','D5','C5','A4','G4','E4','D4','E4','G4','A4'] },
+  { // "I can't sleep until I feel your touch"
+    name: 'Blinding Lights — The Weeknd',
+    notes: ['Fs4','Fs4','E4','Ds4','Cs4','B3','Cs4','Ds4','E4','Fs4','E4','Ds4','Cs4','B3','Cs4','Ds4','E4','Fs4','B4','A4','Fs4','E4'],
+    stepMs: 200,
+  },
+  { // "I got the eye of the tiger, a fighter"
+    name: 'Roar — Katy Perry',
+    notes: ['D4','D4','D4','D4','F4','F4','F4','G4','F4','D4','D4','D4','D4','F4','F4','F4','G4','A4','G4','F4'],
+    stepMs: 220,
+  },
+  { // "Pain! You made me a, you made me a believer"
+    name: 'Believer — Imagine Dragons',
+    notes: ['A4','E4','E4','E4','E4','D4','C4','D4','E4','A4','E4','E4','E4','E4','D4','C4','D4','E4','D4','C4'],
+    stepMs: 240,
+  },
+  { // "Lately I been, I been losing sleep"
+    name: 'Counting Stars — OneRepublic',
+    notes: ['G4','G4','A4','G4','E4','D4','E4','G4','G4','A4','G4','E4','D4','E4','C4','D4','E4','G4'],
+    stepMs: 230,
+  },
+  { // "So baby pull me closer in the backseat of your Rover"
+    name: 'Closer — The Chainsmokers',
+    notes: ['E4','D4','C4','B3','E4','D4','C4','B3','E4','D4','E4','G4','A4','G4','E4','D4','C4'],
+    stepMs: 220,
+  },
+  { // "I need you to stay, need you to stay, hey"
+    name: 'Stay — The Kid LAROI & Justin Bieber',
+    notes: ['A4','G4','F4','E4','A4','G4','F4','E4','A4','G4','F4','E4','D4','E4','F4','E4','D4','C4'],
+    stepMs: 180,
+  },
+  { // "Where are you now? Atlantis, under the sea"
+    name: 'Faded — Alan Walker',
+    notes: ['Fs4','E4','Cs4','B3','Cs4','E4','Fs4','A4','B4','A4','Fs4','E4','Cs4','B3','A3','B3','Cs4','E4'],
+    stepMs: 260,
+  },
+  { // "I got you, moonlight, you're my starlight"
+    name: 'Levitating — Dua Lipa',
+    notes: ['E5','D5','B4','A4','G4','A4','B4','D5','E5','D5','B4','A4','G4','E4','G4','A4','B4'],
+    stepMs: 220,
+  },
+  { // "Despacito, quiero respirar tu cuello despacito"
+    name: 'Despacito — Luis Fonsi',
+    notes: ['D5','D5','Cs5','B4','A4','G4','Fs4','G4','A4','B4','A4','G4','Fs4','E4','Fs4','G4','A4'],
+    stepMs: 240,
+  },
+  { // "Just gonna stand there and watch me burn" — well, instead use:
+    // "Hello from the other side, I must've called a thousand times"
+    name: 'Hello — Adele',
+    notes: ['E4','G4','A4','G4','E4','D4','C4','D4','E4','G4','A4','G4','E4','D4','C4','D4','E4'],
+    stepMs: 280,
+  },
 ]
 
 function SimonGame() {
@@ -118,25 +162,35 @@ function SimonGame() {
     setPhase('showing')
     timeoutsRef.current.forEach(clearTimeout)
     timeoutsRef.current = []
+    // Step duration: classic = fixed; melody = song bpm
+    const step = mode === 'melody' ? (s.stepMs || 260) : 480
+    const litMs = Math.max(120, step * 0.7)
     for (let i = 0; i < len; i++) {
       const { pad, freq } = getStep(i, mode, s, seq)
       const onT = setTimeout(() => {
         setActivePad(pad)
-        playTone(freq, 380)
-      }, i * 480 + 400)
-      const offT = setTimeout(() => setActivePad(null), i * 480 + 720)
+        playTone(freq, litMs + 60)
+      }, i * step + 400)
+      const offT = setTimeout(() => setActivePad(null), i * step + 400 + litMs)
       timeoutsRef.current.push(onT, offT)
     }
     const doneT = setTimeout(() => {
       setPhase('input')
       setPlayerIdx(0)
-    }, len * 480 + 500)
+    }, len * step + 500)
     timeoutsRef.current.push(doneT)
   }
 
   const start = () => {
     if (variant === 'melody') {
-      const s = SONGS[Math.floor(Math.random() * SONGS.length)]
+      // Pick a song different from the previous one if possible
+      let s = SONGS[Math.floor(Math.random() * SONGS.length)]
+      if (SONGS.length > 1) {
+        let safety = 0
+        while (s.name === song.name && safety++ < 10) {
+          s = SONGS[Math.floor(Math.random() * SONGS.length)]
+        }
+      }
       setSong(s)
       setRound(1)
       showSequence(1, 'melody', s, [])
