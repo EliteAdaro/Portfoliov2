@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion'
 import { skills, certificates } from '../../config/siteData'
+import { useLanguage } from '../../context/LanguageContext'
 import SectionHeading from '../ui/SectionHeading'
 import AnimatedReveal from '../ui/AnimatedReveal'
 
 function SkillGroup({ group, index }) {
+  const { t } = useLanguage()
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
@@ -12,7 +14,7 @@ function SkillGroup({ group, index }) {
       transition={{ duration: 0.5, delay: index * 0.1 }}
     >
       <h4 className="font-mono text-primary text-xs mb-3 uppercase tracking-wider">
-        {group.category}
+        {t(`skills.categories.${group.category}`)}
       </h4>
       <div className="flex flex-wrap gap-2">
         {group.items.map((item) => (
@@ -29,16 +31,17 @@ function SkillGroup({ group, index }) {
 }
 
 export default function Skills() {
+  const { t } = useLanguage()
   return (
     <section id="skills" className="py-24 px-6">
       <div className="max-w-4xl mx-auto">
-        <SectionHeading number="02" title="Skills & Experience" />
+        <SectionHeading number="02" title={t('skills.title')} />
 
         <div className="grid md:grid-cols-2 gap-12">
           <div>
             <AnimatedReveal>
               <h3 className="text-lg font-semibold text-slate-800 dark:text-lightest-slate mb-6">
-                Technical Skills
+                {t('skills.technical')}
               </h3>
             </AnimatedReveal>
             <div className="space-y-6">
@@ -51,7 +54,7 @@ export default function Skills() {
           <div>
             <AnimatedReveal delay={0.2}>
               <h3 className="text-lg font-semibold text-slate-800 dark:text-lightest-slate mb-6">
-                Certificates
+                {t('skills.certificates')}
               </h3>
             </AnimatedReveal>
             {certificates.map((cert) => (
@@ -78,7 +81,7 @@ export default function Skills() {
             <AnimatedReveal delay={0.5}>
               <div className="mt-6 p-6 rounded-xl border border-slate-200 dark:border-navy-lighter bg-slate-50 dark:bg-navy-light">
                 <h4 className="font-mono text-primary text-sm mb-4">
-                  Currently Learning
+                  {t('skills.learning')}
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {['React', 'Three.js', 'Tailwind CSS', 'TypeScript'].map(

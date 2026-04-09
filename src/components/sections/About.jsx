@@ -1,9 +1,15 @@
 import { motion } from 'framer-motion'
-import { aboutText } from '../../config/siteData'
+import { age } from '../../config/siteData'
+import { useLanguage } from '../../context/LanguageContext'
+import { translations } from '../../i18n/translations'
 import SectionHeading from '../ui/SectionHeading'
 import AnimatedReveal from '../ui/AnimatedReveal'
 
 export default function About() {
+  const { language, t } = useLanguage()
+  const paragraphs = translations[language].about.paragraphs.map((p) =>
+    typeof p === 'function' ? p(age) : p,
+  )
   const technologies = [
     'JavaScript (ES6+)',
     'HTML & CSS',
@@ -18,11 +24,11 @@ export default function About() {
   return (
     <section id="about" className="py-24 px-6">
       <div className="max-w-4xl mx-auto">
-        <SectionHeading number="01" title="About Me" />
+        <SectionHeading number="01" title={t('about.title')} />
 
         <div className="grid md:grid-cols-3 gap-12">
           <div className="md:col-span-2 space-y-4">
-            {aboutText.map((paragraph, i) => (
+            {paragraphs.map((paragraph, i) => (
               <AnimatedReveal key={i} delay={i * 0.1}>
                 <p className="text-slate-600 dark:text-slate-text leading-relaxed">
                   {paragraph}
@@ -32,7 +38,7 @@ export default function About() {
 
             <AnimatedReveal delay={0.4}>
               <p className="text-slate-600 dark:text-slate-text leading-relaxed mt-4">
-                Here are a few technologies I&apos;ve been working with recently:
+                {t('about.techIntro')}
               </p>
               <ul className="grid grid-cols-2 gap-2 mt-4">
                 {technologies.map((tech) => (

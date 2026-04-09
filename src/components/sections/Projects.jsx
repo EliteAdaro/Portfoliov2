@@ -1,9 +1,13 @@
 import { motion } from 'framer-motion'
 import { ExternalLink, Github, Folder } from 'lucide-react'
 import { projects } from '../../config/siteData'
+import { useLanguage } from '../../context/LanguageContext'
 import SectionHeading from '../ui/SectionHeading'
 
 function ProjectCard({ project, index }) {
+  const { t } = useLanguage()
+  const title = t(`projects.items.${project.title}.title`)
+  const description = t(`projects.items.${project.title}.description`)
   const Wrapper = project.liveUrl ? 'a' : 'div'
   const wrapperProps = project.liveUrl
     ? { href: project.liveUrl, target: '_blank', rel: 'noopener noreferrer' }
@@ -31,7 +35,7 @@ function ProjectCard({ project, index }) {
                   window.open(project.githubUrl, '_blank')
                 }}
                 className="text-slate-400 dark:text-light-slate hover:text-primary transition-colors cursor-pointer"
-                aria-label={`${project.title} source code`}
+                aria-label={`${title} source code`}
               >
                 <Github size={20} />
               </span>
@@ -45,11 +49,11 @@ function ProjectCard({ project, index }) {
         </div>
 
         <h3 className="text-xl font-bold text-slate-900 dark:text-lightest-slate mb-3 group-hover:text-primary transition-colors">
-          {project.title}
+          {title}
         </h3>
 
         <p className="text-slate-600 dark:text-slate-text text-sm leading-relaxed mb-6">
-          {project.description}
+          {description}
         </p>
 
         <div className="flex flex-wrap gap-2 mt-auto">
@@ -68,10 +72,11 @@ function ProjectCard({ project, index }) {
 }
 
 export default function Projects() {
+  const { t } = useLanguage()
   return (
     <section id="projects" className="py-24 px-6">
       <div className="max-w-5xl mx-auto">
-        <SectionHeading number="03" title="Things I've Built" />
+        <SectionHeading number="03" title={t('projects.title')} />
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project, i) => (

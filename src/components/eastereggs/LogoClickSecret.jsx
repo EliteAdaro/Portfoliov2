@@ -1,18 +1,15 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-
-const messages = [
-  null,    // 0
-  null,    // 1
-  null,    // 2
-  '🤔',   // 3
-  '👀',   // 4
-  '🔥',   // 5
-  'Almost there...', // 6
-  null,    // 7 → trigger
-]
+import { useLanguage } from '../../context/LanguageContext'
 
 export default function LogoClickSecret() {
+  const { t } = useLanguage()
+  const messages = [
+    null, null, null,
+    '🤔', '👀', '🔥',
+    t('eastereggs.almost'),
+    null,
+  ]
   const [clicks, setClicks] = useState(0)
   const [show, setShow] = useState(false)
   const [hint, setHint] = useState(null)
@@ -68,13 +65,13 @@ export default function LogoClickSecret() {
           >
             <p className="text-4xl mb-3">🎉</p>
             <p className="text-primary font-mono text-sm mb-2">
-              Achievement unlocked!
+              {t('eastereggs.achievement')}
             </p>
             <p className="text-lightest-slate font-semibold">
-              You found a secret! You&apos;re clearly someone who pays attention to detail.
+              {t('eastereggs.foundSecret')}
             </p>
             <p className="text-slate-text text-sm mt-2">
-              Fun fact: This portfolio has 7 easter eggs. How many can you find?
+              {t('eastereggs.funFact')}
             </p>
           </motion.div>
         )}

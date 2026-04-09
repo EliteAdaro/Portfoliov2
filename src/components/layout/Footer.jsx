@@ -1,7 +1,9 @@
 import { Github, Linkedin, Mail } from 'lucide-react'
 import { socialLinks, personalInfo } from '../../config/siteData'
+import { useLanguage } from '../../context/LanguageContext'
 
 export default function Footer() {
+  const { t } = useLanguage()
   return (
     <footer className="py-8 text-center border-t border-slate-200 dark:border-navy-lighter">
       <div className="flex justify-center gap-6 mb-4">
@@ -32,7 +34,7 @@ export default function Footer() {
         </a>
       </div>
       <p className="text-sm font-mono text-slate-500 dark:text-slate-300">
-        Designed & Built by {personalInfo.name}
+        {t('footer.built')} {personalInfo.name}
       </p>
     </footer>
   )

@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
+import { translations, resolveKey } from '../i18n/translations'
 
 const LanguageContext = createContext()
 
@@ -26,8 +27,16 @@ export function LanguageProvider({ children }) {
   const toggleLanguage = () =>
     setLanguage((l) => (l === 'nl' ? 'en' : 'nl'))
 
+  const t = (key, ...args) => {
+    const dict = translations[language] || translations.en
+    let value = resolveKey(dict, key)
+    if (value === undefined) value = resolveKey(translations.en, key)
+    if (typeof value === 'function') return value(...args)
+    return value ?? key
+  }
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, toggleLanguage, languages: LANGUAGES }}>
+    <LanguageContext.Provider value={{ language, setLanguage, toggleLanguage, languages: LANGUAGES, t }}>
       {children}
     </LanguageContext.Provider>
   )

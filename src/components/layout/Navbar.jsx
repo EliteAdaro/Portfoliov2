@@ -3,12 +3,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
 import { navLinks } from '../../config/siteData'
 import { useScrollSpy } from '../../hooks/useScrollSpy'
+import { useLanguage } from '../../context/LanguageContext'
 import ThemeToggle from './ThemeToggle'
 import LanguageSwitcher from './LanguageSwitcher'
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { t } = useLanguage()
+  const navKeys = ['about', 'skills', 'projects', 'contact']
   const activeId = useScrollSpy(
     navLinks.map((l) => l.href.replace('#', '')),
     200,
@@ -61,7 +64,7 @@ export default function Navbar() {
               }`}
             >
               <span className="text-primary mr-1">0{i + 1}.</span>
-              {link.name}
+              {t(`nav.${navKeys[i]}`)}
             </a>
           ))}
           <LanguageSwitcher />
@@ -72,7 +75,7 @@ export default function Navbar() {
             rel="noopener noreferrer"
             className="ml-2 px-4 py-2 border border-primary text-primary rounded-lg text-sm font-mono hover:bg-primary/10 transition-colors"
           >
-            Resume
+            {t('nav.resume')}
           </a>
         </div>
 
@@ -107,7 +110,7 @@ export default function Navbar() {
                   onClick={handleLinkClick}
                   className="text-slate-600 dark:text-light-slate hover:text-primary font-mono text-sm"
                 >
-                  <span className="text-primary">0{i + 1}.</span> {link.name}
+                  <span className="text-primary">0{i + 1}.</span> {t(`nav.${navKeys[i]}`)}
                 </a>
               ))}
               <a

@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { personalInfo } from '../../config/siteData'
+import { useLanguage } from '../../context/LanguageContext'
 
 const SceneCanvas = lazy(() => import('../three/SceneCanvas'))
 
@@ -10,6 +11,7 @@ const fadeIn = {
 }
 
 export default function Hero() {
+  const { t } = useLanguage()
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
       {/* 3D Background */}
@@ -23,7 +25,7 @@ export default function Hero() {
       {/* Content — LCP-critical elements render immediately (no opacity:0) */}
       <div className="relative z-10 max-w-6xl mx-auto px-6 py-32">
         <p className="font-mono text-primary text-sm md:text-base mb-5">
-          Hi, my name is
+          {t('hero.greeting')}
         </p>
 
         <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold text-slate-900 dark:text-lightest-slate leading-tight">
@@ -31,11 +33,11 @@ export default function Hero() {
         </h1>
 
         <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-slate-500 dark:text-slate-text mt-2 leading-tight">
-          {personalInfo.subtitle}
+          {t('hero.subtitle')}
         </h2>
 
         <p className="max-w-xl text-slate-600 dark:text-slate-text mt-6 text-base md:text-lg leading-relaxed">
-          {personalInfo.description}
+          {t('hero.description')}
         </p>
 
         <motion.div
@@ -49,13 +51,13 @@ export default function Hero() {
             href="#projects"
             className="px-8 py-3 border-2 border-primary text-primary font-mono text-sm rounded-lg hover:bg-primary/10 transition-colors"
           >
-            Check out my work
+            {t('hero.ctaWork')}
           </a>
           <a
             href="#contact"
             className="px-8 py-3 bg-primary text-navy font-mono text-sm font-semibold rounded-lg hover:bg-primary-dark transition-colors"
           >
-            Get in touch
+            {t('hero.ctaContact')}
           </a>
         </motion.div>
       </div>
