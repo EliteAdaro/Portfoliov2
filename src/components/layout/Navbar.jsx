@@ -4,6 +4,7 @@ import { Menu, X } from 'lucide-react'
 import { navLinks } from '../../config/siteData'
 import { useScrollSpy } from '../../hooks/useScrollSpy'
 import ThemeToggle from './ThemeToggle'
+import LanguageSwitcher from './LanguageSwitcher'
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -63,6 +64,7 @@ export default function Navbar() {
               {link.name}
             </a>
           ))}
+          <LanguageSwitcher />
           <ThemeToggle />
           <a
             href="/CVKayneNeyens.pdf"
@@ -76,6 +78,7 @@ export default function Navbar() {
 
         {/* Mobile toggle */}
         <div className="flex items-center gap-2 md:hidden">
+          <LanguageSwitcher />
           <ThemeToggle />
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
