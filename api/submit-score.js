@@ -2,35 +2,10 @@
 // Server-side score submission with full validation & anti-cheat
 import { supabaseAdmin } from './_supabaseAdmin.js'
 import { checkNameServer } from './_profanityFilter.js'
+import { guard, getIP } from './_rateLimit.js'
 
 const VALID_DIFFICULTIES = ['easy', 'normal', 'hard', 'expert', 'insane']
 const MAX_SCORE = 3970 // (20*20 - 3) * 10
-
-// In-memory rate limiting by IP (resets on cold start, but good enough)
-const rateLimitMap = new Map()
-const RATE_LIMIT_MS = 15_000 // 15 seconds between submissions
-const RATE_LIMIT_CLEANUP = 300_000 // Clean up old entries every 5 min
-let lastCleanup = Date.now()
-
-function rateLimit(ip) {
-  // Cleanup old entries periodically
-  const now = Date.now()
-  if (now - lastCleanup > RATE_LIMIT_CLEANUP) {
-    for (const [key, time] of rateLimitMap) {
-      if (now - time > RATE_LIMIT_MS * 2) rateLimitMap.delete(key)
-    }
-    lastCleanup = now
-  }
-
-  const lastSubmit = rateLimitMap.get(ip)
-  if (lastSubmit && now - lastSubmit < RATE_LIMIT_MS) {
-    const waitSec = Math.ceil((RATE_LIMIT_MS - (now - lastSubmit)) / 1000)
-    return { allowed: false, waitSec }
-  }
-
-  rateLimitMap.set(ip, now)
-  return { allowed: true }
-}
 
 // Minimum game duration estimates (ms) based on difficulty and score
 // At minimum, each food takes ~2 ticks to reach at the fastest possible speed
@@ -67,13 +42,11 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'POST')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
 
+  // Bot detection + rate limit: 4 submissions/min per IP
+  if (guard(req, res, 'submit', 4, 60_000)) return
+
   try {
-    // Rate limit by IP
-    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown'
-    const rl = rateLimit(ip)
-    if (!rl.allowed) {
-      return res.status(429).json({ error: `Too fast! Wait ${rl.waitSec}s before submitting again` })
-    }
+    const ip = getIP(req)
 
     const { name, score, difficulty, gameDuration, chaosCount } = req.body || {}
 

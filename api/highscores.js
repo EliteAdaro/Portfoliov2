@@ -1,6 +1,7 @@
 // GET /api/highscores?period=all&difficulty=normal&limit=10
 // Server-side endpoint — client never touches the database directly
 import { supabaseAdmin } from './_supabaseAdmin.js'
+import { guard } from './_rateLimit.js'
 
 const VALID_PERIODS = ['all', 'daily', 'weekly', 'monthly']
 const VALID_DIFFICULTIES = ['easy', 'normal', 'hard', 'expert', 'insane']
@@ -24,6 +25,9 @@ export default async function handler(req, res) {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', 'https://kayneneyens.nl')
   res.setHeader('Access-Control-Allow-Methods', 'GET')
+
+  // Bot detection + rate limit: 30 requests/min per IP
+  if (guard(req, res, 'highscores', 30, 60_000)) return
 
   try {
     const { period = 'all', difficulty, limit: limitParam, chaos } = req.query
