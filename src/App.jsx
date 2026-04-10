@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
 import { LanguageProvider } from './context/LanguageContext'
 import Layout from './components/layout/Layout'
@@ -15,6 +15,11 @@ const HireMeDetector = lazy(() => import('./components/eastereggs/HireMeDetector
 const CyberpunkMode = lazy(() => import('./components/eastereggs/CyberpunkMode'))
 const LogoClickSecret = lazy(() => import('./components/eastereggs/LogoClickSecret'))
 const CommandPalette = lazy(() => import('./components/eastereggs/CommandPalette'))
+
+function RoutedSpeedInsights() {
+  const location = useLocation()
+  return <SpeedInsights route={location.pathname} />
+}
 
 export default function App() {
   return (
@@ -38,7 +43,7 @@ export default function App() {
           <CommandPalette />
         </Suspense>
         <Analytics />
-        <SpeedInsights />
+        <RoutedSpeedInsights />
         </LanguageProvider>
       </ThemeProvider>
     </BrowserRouter>
