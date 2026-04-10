@@ -4,7 +4,8 @@ import { LanguageProvider } from './context/LanguageContext'
 import Layout from './components/layout/Layout'
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
-import { Analytics } from "@vercel/analytics/next"
+import { Analytics } from "@vercel/analytics/react"
+import { SpeedInsights } from "@vercel/speed-insights/react"
 
 // Easter eggs — lazy loaded to keep initial bundle small
 import { lazy, Suspense } from 'react'
@@ -36,6 +37,8 @@ export default function App() {
           <LogoClickSecret />
           <CommandPalette />
         </Suspense>
+        <Analytics />
+        <SpeedInsights />
         </LanguageProvider>
       </ThemeProvider>
     </BrowserRouter>
