@@ -1,4 +1,12 @@
 {
+  "redirects": [
+    {
+      "source": "/:path(.*)",
+      "has": [{ "type": "host", "value": "portfoliov21-beige.vercel.app" }],
+      "destination": "https://kayneneyens.nl/:path",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     { "source": "/((?!api|assets|fonts|projects|favicon|CVKayneNeyens|og-).*)", "destination": "/index.html" }
   ],
