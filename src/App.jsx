@@ -4,6 +4,7 @@ import { LanguageProvider } from './context/LanguageContext'
 import Layout from './components/layout/Layout'
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
+import { Analytics } from "@vercel/analytics/next"
 
 // Easter eggs — lazy loaded to keep initial bundle small
 import { lazy, Suspense } from 'react'
