@@ -67,6 +67,13 @@ export const GAMES = [
     component: lazy(() => import('./Reaction')),
   },
   {
+    id: 'wordle',
+    name: 'Wordle',
+    emoji: '🔤',
+    description: 'Guess the word. Start at 3 letters, level up to 10.',
+    component: lazy(() => import('./Wordle')),
+  },
+  {
     id: 'typing',
     name: 'Typing Test',
     emoji: '⌨️',
